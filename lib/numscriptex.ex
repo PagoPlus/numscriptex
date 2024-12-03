@@ -4,18 +4,16 @@ defmodule Numscriptex do
     check
   )a
 
-  # TODO:
-  # Melhorar o retorno disso, já que mesmo com erro retorna uma tupla
-  # com {:ok, result}
   def check(input), do: process(input, :check)
 
-  # TODO:
-  # Melhorar o retorno disso, já que mesmo com erro retorna uma tupla
-  # com {:ok, result}
   def run(numscript, input) do
     numscript
     |> build_run_data(input)
     |> process(:run)
+  end
+
+  def check_and_run(numscript, input) do
+    # TODO
   end
 
   # TODO: 
@@ -29,13 +27,13 @@ defmodule Numscriptex do
     |> Jason.encode!()
   end
 
-  def process(_input, operation) when operation not in @supported_operations,
-    do: {:invalid_operation}
+  defp process(_input, operation) when operation not in @supported_operations,
+  do: {:invalid_operation}
 
-  def process(input, _operation) when not is_binary(input),
-    do: {:invalid_input}
+  defp process(input, _operation) when not is_binary(input),
+  do: {:invalid_input}
 
-  def process(input, operation) do
+  defp process(input, operation) do
     binary = File.read!("priv/numscript.wasm")
 
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
@@ -57,7 +55,18 @@ defmodule Numscriptex do
 
       stdout_pipe
       |> Wasmex.Pipe.read()
-      |> Jason.decode()
+      |> Jason.decode!()
+      |> handle_process()
     end
   end
+
+  defp handle_process(%{"valid" => valid?}) when valid?, do: :ok
+
+  defp handle_process(%{"valid" => valid?} = result) when not valid?,
+  do: {:error, %{errors: result["errors"]}} 
+
+  defp handle_process(result) when is_map(result),
+  do: {:ok, result} 
+
+  defp handle_process(result), do: result
 end
