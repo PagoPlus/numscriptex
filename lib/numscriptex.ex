@@ -13,11 +13,10 @@ defmodule Numscriptex do
   end
 
   def check_and_run(numscript, input) do
-    # TODO
+    with :ok <- process(numscript, :check),
+    do: run(numscript, input)
   end
 
-  # TODO: 
-  # Acho que da pra melhorar o nome dessa função
   defp build_run_data(numscript, input) do
     decoded_input = Jason.decode!(input)
 
