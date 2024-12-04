@@ -39,17 +39,17 @@ defmodule Numscriptex do
 
     with {:ok, []} <- Wasmex.call_function(pid, :_start, []) do
       Wasmex.Pipe.seek(stderr_pipe, 0)
-
-      stderr_pipe
-      |> Wasmex.Pipe.read()
-      |> IO.inspect(label: "STDERR STDERR STDERR")
+      err = Wasmex.Pipe.read(stderr_pipe)
 
       Wasmex.Pipe.seek(stdout_pipe, 0)
 
-      stdout_pipe
-      |> Wasmex.Pipe.read()
-      |> Jason.decode()
-      |> handle_process()
+      output =
+        stdout_pipe
+        |> Wasmex.Pipe.read()
+        |> Jason.decode()
+        |> handle_process()
+
+      Tuple.append(output, err)
     end
   end
 
