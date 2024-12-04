@@ -1,36 +1,22 @@
 defmodule Numscriptex do
-  @supported_operations ~w(
-    run
-    check
-  )a
-
   def check(input), do: process(input, :check)
 
   def run(numscript, input) do
-    numscript
-    |> build_run_data(input)
-    |> process(:run)
-  end
-
-  def check_and_run(numscript, input) do
-    with :ok <- process(numscript, :check),
-    do: run(numscript, input)
+    with {:ok, data} <- build_run_data(numscript, input),
+    do: process(data, :run)
   end
 
   defp build_run_data(numscript, input) do
-    decoded_input = Jason.decode!(input)
-
-    Map.new()
-    |> Map.put(:script, numscript)
-    |> Map.merge(decoded_input)
-    |> Jason.encode!()
+    with {:ok, decoded_input} <- Jason.decode(input) do
+      Map.new()
+      |> Map.put(:script, numscript)
+      |> Map.merge(decoded_input)
+      |> Jason.encode()
+    end
   end
 
-  defp process(_input, operation) when operation not in @supported_operations,
-  do: {:invalid_operation}
-
   defp process(input, _operation) when not is_binary(input),
-  do: {:invalid_input}
+  do: {:error, :invalid_input}
 
   defp process(input, operation) do
     binary = File.read!("priv/numscript.wasm")
@@ -54,18 +40,25 @@ defmodule Numscriptex do
 
       stdout_pipe
       |> Wasmex.Pipe.read()
-      |> Jason.decode!()
+      |> Jason.decode()
       |> handle_process()
     end
   end
 
-  defp handle_process(%{"valid" => valid?}) when valid?, do: :ok
+  defp handle_process({:ok, %{"valid" => valid?, "errors" => errors}}) 
+    when is_boolean(valid?) and not valid? do
+      {:error, %{errors: errors}}
+  end
 
-  defp handle_process(%{"valid" => valid?} = result) when not valid?,
-  do: {:error, %{errors: result["errors"]}} 
+  defp handle_process({:ok, %{"postings" => postings} = result}) do
+    if Enum.empty?(postings), 
+      do: {:ok, result},
+      else: {:error, :invalid_input}
+  end
 
-  defp handle_process(result) when is_map(result),
-  do: {:ok, result} 
-
-  defp handle_process(result), do: result
+  defp handle_process({:ok, %{"valid" => valid?}}) when is_boolean(valid?) and valid?, do: :ok
+  defp handle_process({:ok, %{"errors" => errors}}), do: {:error, %{errors: errors}}
+  defp handle_process({:error, {:error, reason}}), do: {:error, reason}
+  defp handle_process({:error, _reason} = result), do: result
+  defp handle_process({:ok, _data} = result), do: result
 end
