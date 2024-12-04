@@ -1,19 +1,24 @@
 defmodule Numscriptex do
+  @typep errors :: 
+    {:error, map()} 
+    | {:error, binary()}
+    | {:error, term()}
+    | {:error, map(), term()}
+    | {:error, binary(), term()}
+    | {:error, term(), term()}
+
+  @spec check(binary()) :: :ok | {:ok, term()} | errors()
   def check(input), do: process(input, :check)
 
-  def run(numscript, input) do
-    with {:ok, data} <- build_run_data(numscript, input),
-    do: process(data, :run)
+  @spec run(Numscriptex.Run.t()) :: :ok | {:ok, term()} | errors()
+  def run(%Numscriptex.Run{} = run_struct) do
+    run_struct
+    |> Map.from_struct()
+    |> Jason.encode!()
+    |> process(:run)
   end
 
-  defp build_run_data(numscript, input) do
-    with {:ok, decoded_input} <- Jason.decode(input) do
-      Map.new()
-      |> Map.put(:script, numscript)
-      |> Map.merge(decoded_input)
-      |> Jason.encode()
-    end
-  end
+  def run(_run_struct), do: {:error, :badarg}
 
   defp process(input, _operation) when not is_binary(input),
   do: {:error, :invalid_input}
