@@ -39,19 +39,29 @@ defmodule Numscriptex do
 
     with {:ok, []} <- Wasmex.call_function(pid, :_start, []) do
       Wasmex.Pipe.seek(stderr_pipe, 0)
-      err = Wasmex.Pipe.read(stderr_pipe)
+      error = Wasmex.Pipe.read(stderr_pipe)
 
       Wasmex.Pipe.seek(stdout_pipe, 0)
-
-      output =
-        stdout_pipe
-        |> Wasmex.Pipe.read()
-        |> Jason.decode()
-        |> handle_process()
-
-      Tuple.append(output, err)
+      stdout_pipe
+      |> Wasmex.Pipe.read()
+      |> Jason.decode()
+      |> handle_process()
+      |> maybe_put_stderr(error)
     end
   end
+
+  defp maybe_put_stderr({:error, reason}, stderr) do
+    is_stderr_empty? =
+      stderr
+      |> String.replace(" ", "")
+      |> Kernel.==("")
+
+    if is_stderr_empty?,
+      do: {:error, reason}, 
+      else: {:error, reason, stderr}
+  end
+
+  defp maybe_put_stderr(data, _stderr), do: data
 
   defp handle_process({:ok, %{"valid" => valid?, "errors" => errors}}) 
     when is_boolean(valid?) and not valid? do
@@ -67,6 +77,6 @@ defmodule Numscriptex do
   defp handle_process({:ok, %{"valid" => valid?}}) when is_boolean(valid?) and valid?, do: :ok
   defp handle_process({:ok, %{"errors" => errors}}), do: {:error, %{errors: errors}}
   defp handle_process({:ok, {:error, reason}}), do: {:error, reason}
-  defp handle_process({:error, _reason} = result), do: result
+  defp handle_process({:error, reason}), do: {:error, reason}
   defp handle_process({:ok, _data} = result), do: result
 end
