@@ -1,26 +1,23 @@
 defmodule Numscriptex.Run do
-  defstruct [ 
+  defstruct [
     variables: [],
     balances: [],
     metadata: [],
-    numscript: nil
   ]
 
   @valid_fields ~w(
     variables
     balances
     metadata
-    numscript
   )a
 
   @type t() :: %__MODULE__{
-    variables: list(),
-    balances: list(),
-    metadata: list(),
-    numscript: binary()
+    variables: map(),
+    balances: map(),
+    metadata: map(),
   }
 
-  @spec put(t(), atom(), map()) :: {:ok, t()} | {:error, atom()}
+  @spec put(t(), atom(), map()) :: {:ok, t()} | {:error, atom(), map()}
   def put(_run_struct, field, _value) when field not in @valid_fields,
     do: {:error, :invalid_field, %{message: "Field #{field} does not exists."}}
 

@@ -1,30 +1,30 @@
 defmodule Numscriptex do
-  @typep errors :: 
-    {:error, map()} 
-    | {:error, binary()}
-    | {:error, term()}
-    | {:error, map(), term()}
-    | {:error, binary(), term()}
-    | {:error, term(), term()}
+  @spec check(binary()) :: :ok | {:error, map()}
+  def check(input) do
+    with :ok <- process(input, :check), do: {:ok, %{script: input}}
+  end
 
-  @spec check(binary()) :: :ok | {:ok, term()} | errors()
-  def check(input), do: process(input, :check)
-
-  @spec run(Numscriptex.Run.t()) :: :ok | {:ok, term()} | errors()
-  def run(%Numscriptex.Run{} = run_struct) do
+  @spec run(map(), Numscriptex.Run.t()) :: {:ok, term()} | {:error, map()}
+  def run(%{script: _script} = numscript, %Numscriptex.Run{} = run_struct) do
     run_struct
     |> Map.from_struct()
+    |> Map.merge(numscript)
     |> Jason.encode!()
     |> process(:run)
   end
 
-  def run(_run_struct), do: {:error, :badarg}
+  def run(_numscript, _run_struct), do: {:error, %{reason: :badarg}}
 
   defp process(input, _operation) when not is_binary(input),
-  do: {:error, :invalid_input}
+  do: {:error, %{reason: :invalid_input}}
 
   defp process(input, operation) do
-    binary = File.read!("priv/numscript.wasm")
+    biinary_path = 
+      :numscriptex
+      |> :code.priv_dir()
+      |> Path.join("numscript.wasm")
+
+    binary = File.read!(biinary_path)
 
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
     {:ok, stdin_pipe} = Wasmex.Pipe.new()
@@ -55,7 +55,7 @@ defmodule Numscriptex do
     end
   end
 
-  defp maybe_put_stderr({:error, reason}, stderr) do
+  defp maybe_put_stderr({:error, reason}, stderr) when is_map(reason) do
     is_stderr_empty? =
       stderr
       |> String.replace(" ", "")
@@ -63,7 +63,13 @@ defmodule Numscriptex do
 
     if is_stderr_empty?,
       do: {:error, reason}, 
-      else: {:error, reason, stderr}
+      else: {:error, Map.put(reason, :details, stderr)}
+  end
+
+  defp maybe_put_stderr({:error, reason}, stderr) do
+    error = {:error, %{reason: reason}}
+
+    maybe_put_stderr(error, stderr)
   end
 
   defp maybe_put_stderr(data, _stderr), do: data
@@ -75,13 +81,13 @@ defmodule Numscriptex do
 
   defp handle_process({:ok, %{"postings" => postings} = result}) do
     if Enum.empty?(postings), 
-      do: {:error, :invalid_input},
+      do: {:error, %{reason: :invalid_input}},
       else: {:ok, result}
   end
 
   defp handle_process({:ok, %{"valid" => valid?}}) when is_boolean(valid?) and valid?, do: :ok
   defp handle_process({:ok, %{"errors" => errors}}), do: {:error, %{errors: errors}}
-  defp handle_process({:ok, {:error, reason}}), do: {:error, reason}
-  defp handle_process({:error, reason}), do: {:error, reason}
+  defp handle_process({:ok, {:error, reason}}), do: {:error, %{reason: reason}}
+  defp handle_process({:error, reason}), do: {:error, %{reason: reason}}
   defp handle_process({:ok, _data} = result), do: result
 end
