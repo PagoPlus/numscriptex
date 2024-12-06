@@ -1,5 +1,10 @@
 defmodule Numscriptex do
-  @spec check(binary()) :: :ok | {:error, map()}
+  @binary :numscriptex
+  |> :code.priv_dir()
+  |> Path.join("numscript.wasm")
+  |> File.read!()
+
+  @spec check(binary()) :: {:ok, map()} | {:error, map()}
   def check(input) do
     with :ok <- process(input, :check), do: {:ok, %{script: input}}
   end
@@ -19,13 +24,6 @@ defmodule Numscriptex do
   do: {:error, %{reason: :invalid_input}}
 
   defp process(input, operation) do
-    biinary_path = 
-      :numscriptex
-      |> :code.priv_dir()
-      |> Path.join("numscript.wasm")
-
-    binary = File.read!(biinary_path)
-
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
     {:ok, stdin_pipe} = Wasmex.Pipe.new()
     {:ok, stderr_pipe} = Wasmex.Pipe.new()
@@ -40,9 +38,11 @@ defmodule Numscriptex do
       stderr: stderr_pipe
     }
 
-    {:ok, pid} = Wasmex.start_link(%{bytes: binary, wasi: wasi})
+    {:ok, pid} = Wasmex.start_link(%{bytes: @binary, wasi: wasi})
 
     with {:ok, []} <- Wasmex.call_function(pid, :_start, []) do
+      GenServer.stop(pid)
+
       Wasmex.Pipe.seek(stderr_pipe, 0)
       error = Wasmex.Pipe.read(stderr_pipe)
 
