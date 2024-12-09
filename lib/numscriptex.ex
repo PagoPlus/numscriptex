@@ -11,13 +11,13 @@ defmodule Numscriptex do
     with :ok <- process(input, :check), do: {:ok, %{script: input}}
   end
 
-  @spec run(map(), Numscriptex.Run.t()) :: {:ok, term()} | {:error, map()}
-  def run(%{script: _script} = numscript, %Numscriptex.Run{} = run_struct) do
+  @spec run(binary(), Numscriptex.Run.t()) :: {:ok, term()} | {:error, map()}
+  def run(numscript, %Numscriptex.Run{} = run_struct) do
     initial_balance = Map.get(run_struct, :balances)
 
     run_struct
     |> Map.from_struct()
-    |> Map.merge(numscript)
+    |> Map.merge(%{script: numscript})
     |> Jason.encode!()
     |> process(:run)
     |> maybe_put_final_balance(initial_balance)
@@ -28,6 +28,9 @@ defmodule Numscriptex do
   defp maybe_put_final_balance({:ok, %{"postings" => postings}}, initial_balance) do
     Balances.put(initial_balance, postings)
   end
+
+  defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
+  do: error
 
   defp process(input, _operation) when not is_binary(input),
   do: {:error, %{reason: :invalid_input}}
