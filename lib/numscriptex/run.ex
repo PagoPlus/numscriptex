@@ -1,8 +1,8 @@
 defmodule Numscriptex.Run do
   defstruct [
-    variables: [],
-    balances: [],
-    metadata: [],
+    variables: %{},
+    balances: %{},
+    metadata: %{},
   ]
 
   @valid_fields ~w(
@@ -19,24 +19,38 @@ defmodule Numscriptex.Run do
 
   @spec put(t(), atom(), map()) :: {:ok, t()} | {:error, atom(), map()}
   def put(_run_struct, field, _value) when field not in @valid_fields,
-    do: {:error, :invalid_field, %{message: "Field #{field} does not exists."}}
+    do: {:error, :invalid_field, %{details: "Field #{field} does not exists."}}
 
   def put(_run_struct, field, value) when field != :numscript and not is_map(value),
-  do: {:error, :invalid_value, %{message: "Values except :numscript must be a map."}}
+  do: {:error, :invalid_value, %{details: "Values except :numscript must be a map."}}
 
   def put(_run_struct, :numscript, value) when not is_binary(value),
-  do: {:error, :invalid_value, %{message: "The :numscript value must be a binary."}}
+  do: {:error, :invalid_value, %{details: "The :numscript value must be a binary."}}
+
+  def put(%__MODULE__{} = run_struct, :balances, value) do
+    {:ok, Map.replace(run_struct, :balances, normalize_balances(value))}
+  end
 
   def put(%__MODULE__{} = run_struct, field, value) do
     {:ok, Map.replace(run_struct, field, value)}
   end
+
+  defp normalize_balances(balances) when is_map(balances) do
+    Map.new(balances, &keys_to_string/1)
+  end
+
+  defp keys_to_string({key, value}) when is_map(value), 
+  do: {to_string(key), normalize_balances(value)}
+
+  defp keys_to_string({key, value}), 
+  do: {to_string(key), value}
 
   @spec put!(t(), atom(), map()) :: t() | no_return()
   def put!(run_struct, field, value) do
     case put(run_struct, field, value) do
       {:ok, result} ->
         result
-      {:error, _reason, message} -> 
+      {:error, _reason, %{details: message}} -> 
         raise ArgumentError.message(message)
     end
   end
