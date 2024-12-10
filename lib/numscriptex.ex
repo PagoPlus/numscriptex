@@ -25,8 +25,10 @@ defmodule Numscriptex do
 
   def run(_numscript, _run_struct), do: {:error, %{reason: :badarg}}
 
-  defp maybe_put_final_balance({:ok, %{"postings" => postings}}, initial_balance) do
-    Balances.put(initial_balance, postings)
+  defp maybe_put_final_balance({:ok, %{"postings" => postings} = result} , initial_balance) do
+    balances = Balances.put(initial_balance, postings)
+
+    Map.put(result, "balances", balances)
   end
 
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
