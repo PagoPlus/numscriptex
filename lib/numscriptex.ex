@@ -2,16 +2,25 @@ defmodule Numscriptex do
   alias Numscriptex.Balances
 
   @binary :numscriptex
-  |> :code.priv_dir()
-  |> Path.join("numscript.wasm")
-  |> File.read!()
+          |> :code.priv_dir()
+          |> Path.join("numscript.wasm")
+          |> File.read!()
 
   @spec check(binary()) :: {:ok, map()} | {:error, map()}
   def check(input) do
-    with :ok <- process(input, :check), do: {:ok, %{script: input}}
+    case process(input, :check) do
+      {:ok, details} ->
+        {:ok, %{script: input, details: details}}
+
+      :ok -> 
+        {:ok, %{script: input}}
+
+      error ->
+        error
+    end
   end
 
-  @spec run(binary(), Numscriptex.Run.t()) :: {:ok, term()} | {:error, map()}
+  @spec run(binary(), Numscriptex.Run.t()) :: {:ok, map()} | {:error, map()}
   def run(numscript, %Numscriptex.Run{} = run_struct) do
     initial_balance = Map.get(run_struct, :balances)
 
@@ -25,17 +34,17 @@ defmodule Numscriptex do
 
   def run(_numscript, _run_struct), do: {:error, %{reason: :badarg}}
 
-  defp maybe_put_final_balance({:ok, %{"postings" => postings} = result} , initial_balance) do
+  defp maybe_put_final_balance({:ok, %{"postings" => postings} = result}, initial_balance) do
     balances = Balances.put(initial_balance, postings)
 
     Map.put(result, "balances", balances)
   end
 
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
-  do: error
+    do: error
 
   defp process(input, _operation) when not is_binary(input),
-  do: {:error, %{reason: :invalid_input}}
+    do: {:error, %{reason: :invalid_input}}
 
   defp process(input, operation) do
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
@@ -61,6 +70,7 @@ defmodule Numscriptex do
       error = Wasmex.Pipe.read(stderr_pipe)
 
       Wasmex.Pipe.seek(stdout_pipe, 0)
+
       stdout_pipe
       |> Wasmex.Pipe.read()
       |> Jason.decode()
@@ -75,9 +85,7 @@ defmodule Numscriptex do
       |> String.replace(" ", "")
       |> Kernel.==("")
 
-    if is_stderr_empty?,
-      do: {:error, reason}, 
-      else: {:error, Map.put(reason, :details, stderr)}
+    if is_stderr_empty?, do: {:error, reason}, else: {:error, Map.put(reason, :details, stderr)}
   end
 
   defp maybe_put_stderr({:error, reason}, stderr) do
@@ -88,19 +96,28 @@ defmodule Numscriptex do
 
   defp maybe_put_stderr(data, _stderr), do: data
 
-  defp handle_process({:ok, %{"valid" => valid?, "errors" => errors}}) 
-    when is_boolean(valid?) and not valid? do
-      {:error, %{errors: errors}}
+  defp handle_process({:ok, %{"valid" => valid?} = result}) when is_boolean(valid?) and valid? do
+    normalized_result = Map.delete(result, "valid")
+
+    has_details? = not Enum.empty?(normalized_result)
+
+    if has_details?, do: {:ok, normalized_result}, else: :ok
+  end
+
+  defp handle_process({:ok, %{"valid" => valid?, "errors" => _err} = result})
+       when is_boolean(valid?) and not valid? do
+    {:error, Map.delete(result, "valid")}
   end
 
   defp handle_process({:ok, %{"postings" => postings} = result}) do
-    if Enum.empty?(postings), 
+    if Enum.empty?(postings),
       do: {:error, %{reason: :invalid_input}},
       else: {:ok, result}
   end
 
-  defp handle_process({:ok, %{"valid" => valid?}}) when is_boolean(valid?) and valid?, do: :ok
-  defp handle_process({:ok, %{"errors" => errors}}), do: {:error, %{errors: errors}}
+  defp handle_process({:ok, %{"errors" => _errors} = result}),
+    do: {:error, Map.delete(result, "valid")}
+
   defp handle_process({:ok, {:error, reason}}), do: {:error, %{reason: reason}}
   defp handle_process({:error, reason}), do: {:error, %{reason: reason}}
   defp handle_process({:ok, _data} = result), do: result
