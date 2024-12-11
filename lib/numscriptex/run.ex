@@ -19,13 +19,10 @@ defmodule Numscriptex.Run do
 
   @spec put(t(), atom(), map()) :: {:ok, t()} | {:error, atom(), map()}
   def put(_run_struct, field, _value) when field not in @valid_fields,
-    do: {:error, :invalid_field, %{details: "Field #{field} does not exists."}}
+    do: {:error, :invalid_field, %{details: "The field '#{field}' does not exists."}}
 
-  def put(_run_struct, field, value) when field != :numscript and not is_map(value),
-  do: {:error, :invalid_value, %{details: "Values except :numscript must be a map."}}
-
-  def put(_run_struct, :numscript, value) when not is_binary(value),
-  do: {:error, :invalid_value, %{details: "The :numscript value must be a binary."}}
+  def put(_run_struct, _field, value) when not is_map(value),
+  do: {:error, :invalid_value, %{details: "Values argument must be a map."}}
 
   def put(%__MODULE__{} = run_struct, :balances, value) do
     {:ok, Map.replace(run_struct, :balances, normalize_balances(value))}
@@ -51,7 +48,7 @@ defmodule Numscriptex.Run do
       {:ok, result} ->
         result
       {:error, _reason, %{details: message}} -> 
-        raise ArgumentError.message(message)
+        raise ArgumentError, message: message
     end
   end
 end
