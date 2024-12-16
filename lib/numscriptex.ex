@@ -12,7 +12,7 @@ defmodule Numscriptex do
       {:ok, details} ->
         {:ok, %{script: input, details: details}}
 
-      :ok -> 
+      :ok ->
         {:ok, %{script: input}}
 
       error ->
@@ -37,7 +37,7 @@ defmodule Numscriptex do
   defp maybe_put_final_balance({:ok, %{"postings" => postings} = result}, initial_balance) do
     balances = Balances.put(initial_balance, postings)
 
-    Map.put(result, "balances", balances)
+    {:ok, Map.put(result, "balances", balances)}
   end
 
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),

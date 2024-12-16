@@ -6,6 +6,7 @@ defmodule Numscriptex.Balances do
     |> Enum.uniq()
     |> handle_initial_balance(account_assets)
     |> handle_final_balance(postings)
+    |> maybe_drop_balance()
   end
 
   defp build_balances(account_assets, postings) do
@@ -29,18 +30,26 @@ defmodule Numscriptex.Balances do
   end
 
   defp build_balances_by_postings(postings) do
-    Enum.map(postings, fn posting ->
+    Enum.flat_map(postings, fn posting ->
+      [
+        %{
+          "account" => posting["source"],
+          "asset" => posting["asset"],
+          "initial_balance" => 0,
+          "final_balance" => 0
+        },
         %{
           "account" => posting["destination"],
           "asset" => posting["asset"],
           "initial_balance" => 0,
           "final_balance" => 0
         }
+      ]
     end)
   end
 
   defp handle_initial_balance(balances, account_assets) do
-    Enum.map(balances, fn balance -> 
+    Enum.map(balances, fn balance ->
       account = balance["account"]
       asset = balance["asset"]
 
@@ -55,10 +64,9 @@ defmodule Numscriptex.Balances do
       initial_balance = balance["initial_balance"]
 
       Enum.reduce(postings, {%{}, initial_balance}, fn posting, {_map, acc} ->
-        {
-          balance,
-          calculate_final_balance(balance, posting, acc)
-        }
+        final_balance = calculate_final_balance(balance, posting, acc)
+
+        {balance, final_balance}
       end)
     end)
     |> Enum.map(fn {balance, final_balance} ->
@@ -81,5 +89,12 @@ defmodule Numscriptex.Balances do
       true ->
         initial_balance
     end
+  end
+
+  def maybe_drop_balance(balances) do
+    Enum.reject(balances, fn balance ->
+      balance["initial_balance"] == 0 and
+        balance["final_balance"] == 0
+    end)
   end
 end
