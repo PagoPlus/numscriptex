@@ -76,6 +76,17 @@ defmodule Numscriptex do
       |> Jason.decode()
       |> handle_process()
       |> maybe_put_stderr(error)
+    else
+      {:error, _reason} ->
+        Wasmex.Pipe.seek(stderr_pipe, 0)
+        error = Wasmex.Pipe.read(stderr_pipe)
+
+        Wasmex.Pipe.seek(stdout_pipe, 0)
+        stdout = Wasmex.Pipe.read(stdout_pipe)
+
+        {:error, stdout}
+        |> handle_process()
+        |> maybe_put_stderr(error)
     end
   end
 
