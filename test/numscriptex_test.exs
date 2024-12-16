@@ -860,6 +860,51 @@ defmodule NumscriptexTest do
                }
              ]
     end
+
+    test "with insufficient amount" do
+      script = """
+      send [USD/2 100] (
+        source = @foo
+        destination = @bar
+      )
+      """
+
+      variables = %{}
+      metadata = %{}
+      balances = %{"foo" => %{"USD/2" => 99, "EUR/2" => 200}}
+
+      struct = build_run_struct(balances, metadata, variables)
+
+      assert {:error, error} = Numscriptex.run(script, struct)
+      assert error.reason == "panic: Not enough funds. Needed [USD/2 100] (only [USD/2 99] available)\n"
+    end
+
+    test "with variables missing" do
+      script = """
+      vars {
+        account $user
+        monetary $fee
+        portion $tax
+      }
+
+      send $fee (
+        source = $user
+        destination = {
+          $tax to @platform:tax
+          remaining to @platform:revenue
+        }
+      )
+      """
+
+      metadata = %{}
+      balances = %{"users:1234" => %{"USD/2" => 10000}}
+      variables = %{"fee" => "USD/2 100", "tax" => "20%"}
+
+      struct = build_run_struct(balances, metadata, variables)
+
+      assert {:error, error} = Numscriptex.run(script, struct)
+      assert error.reason == "panic: Variable is missing in json: user\n"
+    end
   end
 
   defp build_run_struct(balances, metadata, variables) do
