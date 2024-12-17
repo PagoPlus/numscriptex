@@ -1,4 +1,45 @@
 defmodule Numscriptex do
+  @moduledoc """
+  NumscriptEx is a lib that allows its users to check and run numscripts via Elixir.
+
+  Both `check/1` and `run/2` functions will return a 2 element tuple, either
+  `{:ok, result}` or `{:error, reason}`. Both result and result will be maps.
+
+  To use `check/1` you just need to pass your numscript as its argument.
+  Ex:
+
+  iex>  "your_path/your_file.num"
+  iex>  |> File.read!()
+  iex>  |> Numscriptex.check()
+
+  Will return:
+    `{:ok, %{script: <your_script>}}`
+  It could also return some warnings, infos or hints inside the map.
+
+  To use `run/2` your first argument must be your script, and the second must
+  be a `%Numscriptex.Run{}` (go to Numscriptex.Run module to see more) struct.
+  Ex:
+   
+  iex>  struct = 
+  iex>    %Numscriptex.Run{}
+  iex>	  |> Numscriptex.Run.put!(:balances, balances)
+  iex>	  |> Numscriptex.Run.put!(:metadata, metadata)
+  iex>	  |> Numscriptex.Run.put!(:variables, variables)
+  iex>
+  iex>  Numscriptex.run(script, struct)
+
+  Will return:
+    {:ok, result} | {error, reason}
+
+  Where result will be something like this:
+    %{
+      "postings" => postings # a list with maps
+      "balances" => balances # also a list with maps
+      "accountMeta" => %{} 
+      "txMeta" => %{} 
+    }
+  """
+
   alias Numscriptex.Balances
 
   @binary :numscriptex
@@ -63,21 +104,24 @@ defmodule Numscriptex do
 
     {:ok, pid} = Wasmex.start_link(%{bytes: @binary, wasi: wasi})
 
-    with {:ok, []} <- Wasmex.call_function(pid, :_start, []) do
-      GenServer.stop(pid)
+    case Wasmex.call_function(pid, :_start, []) do
+      {:ok, []} ->
+        GenServer.stop(pid)
 
-      Wasmex.Pipe.seek(stderr_pipe, 0)
-      error = Wasmex.Pipe.read(stderr_pipe)
+        Wasmex.Pipe.seek(stderr_pipe, 0)
+        error = Wasmex.Pipe.read(stderr_pipe)
 
-      Wasmex.Pipe.seek(stdout_pipe, 0)
+        Wasmex.Pipe.seek(stdout_pipe, 0)
 
-      stdout_pipe
-      |> Wasmex.Pipe.read()
-      |> Jason.decode()
-      |> handle_process()
-      |> maybe_put_stderr(error)
-    else
+        stdout_pipe
+        |> Wasmex.Pipe.read()
+        |> Jason.decode()
+        |> handle_process()
+        |> maybe_put_stderr(error)
+        
       {:error, _reason} ->
+        GenServer.stop(pid)
+
         Wasmex.Pipe.seek(stderr_pipe, 0)
         error = Wasmex.Pipe.read(stderr_pipe)
 

@@ -53,9 +53,9 @@ defmodule Numscriptex.BalancesTest do
       refute any_asset_on_postings?("EUR/2", postings)
 
       assert balances = Balances.put(initial_balances, postings)
-      assert is_asset_untouched?("EUR/2", balances)
-      assert is_asset_untouched?("BRL/2", balances)
-      refute is_asset_untouched?("USD/2", balances)
+      assert asset_untouched?("EUR/2", balances)
+      assert asset_untouched?("BRL/2", balances)
+      refute asset_untouched?("USD/2", balances)
     end
   end
 
@@ -65,11 +65,9 @@ defmodule Numscriptex.BalancesTest do
     end)
   end
 
-  defp is_asset_untouched?(asset, balances) do
-    target = Enum.find(balances, fn balance -> balance["asset"] == asset end)
+  defp asset_untouched?(asset, balances) do
+    target = Enum.find(balances, false, fn balance -> balance["asset"] == asset end)
 
-    if not is_nil(target),
-      do: target["final_balance"] == target["initial_balance"],
-      else: false
+    if target, do: target["final_balance"] == target["initial_balance"]
   end
 end

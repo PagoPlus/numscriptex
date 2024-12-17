@@ -191,7 +191,7 @@ defmodule NumscriptexTest do
         "users:1234:main" => %{"USD/2" => 5000},
         "users:1234:vouchers:2024-01-31" => %{"USD/2" => 1000},
         "users:1234:vouchers:2024-02-17" => %{"USD/2" => 3000},
-        "users:1234:vouchers:2024-03-22" => %{"USD/2" => 10000}
+        "users:1234:vouchers:2024-03-22" => %{"USD/2" => 10_000}
       }
 
       struct = build_run_struct(balances, metadata, variables)
@@ -248,12 +248,12 @@ defmodule NumscriptexTest do
                  "account" => "users:1234:vouchers:2024-03-22",
                  "asset" => "USD/2",
                  "final_balance" => 9000,
-                 "initial_balance" => 10000
+                 "initial_balance" => 10_000
                },
                %{
                  "account" => "orders:4567:payment",
                  "asset" => "USD/2",
-                 "final_balance" => 10000,
+                 "final_balance" => 10_000,
                  "initial_balance" => 0
                }
              ]
@@ -287,7 +287,7 @@ defmodule NumscriptexTest do
       variables = %{}
 
       balances = %{
-        "coupons:FALL24" => %{"USD/2" => 99900},
+        "coupons:FALL24" => %{"USD/2" => 99_900},
         "users:1234" => %{"USD/2" => 100_000}
       }
 
@@ -303,7 +303,7 @@ defmodule NumscriptexTest do
                  "source" => "coupons:FALL24"
                },
                %{
-                 "amount" => 27900,
+                 "amount" => 27_900,
                  "asset" => "USD/2",
                  "destination" => "payments:4567",
                  "source" => "users:1234"
@@ -326,19 +326,19 @@ defmodule NumscriptexTest do
                %{
                  "account" => "coupons:FALL24",
                  "asset" => "USD/2",
-                 "final_balance" => 97000,
-                 "initial_balance" => 99900
+                 "final_balance" => 97_000,
+                 "initial_balance" => 99_900
                },
                %{
                  "account" => "users:1234",
                  "asset" => "USD/2",
-                 "final_balance" => 64000,
+                 "final_balance" => 64_000,
                  "initial_balance" => 100_000
                },
                %{
                  "account" => "payments:4567",
                  "asset" => "USD/2",
-                 "final_balance" => 29900,
+                 "final_balance" => 29_900,
                  "initial_balance" => 0
                },
                %{
@@ -426,7 +426,7 @@ defmodule NumscriptexTest do
 
       metadata = %{}
       variables = %{}
-      balances = %{"orders:1234" => %{"USD/2" => 10000}}
+      balances = %{"orders:1234" => %{"USD/2" => 10_000}}
 
       struct = build_run_struct(balances, metadata, variables)
 
@@ -464,7 +464,7 @@ defmodule NumscriptexTest do
                  "account" => "orders:1234",
                  "asset" => "USD/2",
                  "final_balance" => 0,
-                 "initial_balance" => 10000
+                 "initial_balance" => 10_000
                },
                %{
                  "account" => "platform:commission:sales_tax",
@@ -752,7 +752,7 @@ defmodule NumscriptexTest do
 
       metadata = %{}
       variables = %{"fee" => "USD/2 100", "tax" => "20%", "user" => "users:1234"}
-      balances = %{"users:1234" => %{"USD/2" => 10000}}
+      balances = %{"users:1234" => %{"USD/2" => 10_000}}
 
       struct = build_run_struct(balances, metadata, variables)
 
@@ -778,7 +778,7 @@ defmodule NumscriptexTest do
                  "account" => "users:1234",
                  "asset" => "USD/2",
                  "final_balance" => 9900,
-                 "initial_balance" => 10000
+                 "initial_balance" => 10_000
                },
                %{
                  "account" => "platform:tax",
@@ -897,7 +897,7 @@ defmodule NumscriptexTest do
       """
 
       metadata = %{}
-      balances = %{"users:1234" => %{"USD/2" => 10000}}
+      balances = %{"users:1234" => %{"USD/2" => 10_000}}
       variables = %{"fee" => "USD/2 100", "tax" => "20%"}
 
       struct = build_run_struct(balances, metadata, variables)

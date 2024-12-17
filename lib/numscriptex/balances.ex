@@ -1,4 +1,49 @@
 defmodule Numscriptex.Balances do
+  @moduledoc """
+  Build the account's final balance based of the postings field that you get
+  after running your numscript. For example, if your input balance was:
+  
+    %{
+      "foo" => %{
+        "USD/2" => 500,
+        "EUR/2" => 300
+      }
+    }
+
+  And the postings:
+
+    [
+      %{
+        "amount" => 100,
+        "asset" => "USD/2",
+        "destination" => "bar",
+        "source" => "foo"
+      }
+    ]
+
+  The following balances will be generated:
+
+    [
+      %{
+        "account" => "foo",
+        "asset" => "EUR/2",
+        "final_balance" => 300,
+        "initial_balance" => 300
+      },
+      %{
+        "account" => "foo",
+        "asset" => "USD/2",
+        "final_balance" => 400,
+        "initial_balance" => 500
+      },
+      %{
+        "account" => "bar",
+        "asset" => "USD/2",
+        "final_balance" => 100,
+        "initial_balance" => 0
+      }
+    ]
+  """
   @spec put(map(), list()) :: list(map())
   def put(account_assets, postings) do
     account_assets

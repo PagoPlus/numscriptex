@@ -1,4 +1,10 @@
 defmodule Numscriptex.Run do
+  @moduledoc """
+  This module is an abstraction of the json input that the numscript needs to
+  run correctly.
+
+  You can see the numscript playground for examples.
+  """
   defstruct variables: %{},
             balances: %{},
             metadata: %{}
