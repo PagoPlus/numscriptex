@@ -118,7 +118,7 @@ defmodule Numscriptex do
         |> Jason.decode()
         |> handle_process()
         |> maybe_put_stderr(error)
-        
+
       {:error, _reason} ->
         GenServer.stop(pid)
 

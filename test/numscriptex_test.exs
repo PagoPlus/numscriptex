@@ -876,7 +876,9 @@ defmodule NumscriptexTest do
       struct = build_run_struct(balances, metadata, variables)
 
       assert {:error, error} = Numscriptex.run(script, struct)
-      assert error.reason == "panic: Not enough funds. Needed [USD/2 100] (only [USD/2 99] available)\n"
+
+      assert error.reason ==
+               "panic: Not enough funds. Needed [USD/2 100] (only [USD/2 99] available)\n"
     end
 
     test "with variables missing" do

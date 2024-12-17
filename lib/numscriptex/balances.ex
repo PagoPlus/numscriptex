@@ -2,7 +2,7 @@ defmodule Numscriptex.Balances do
   @moduledoc """
   Build the account's final balance based of the postings field that you get
   after running your numscript. For example, if your input balance was:
-  
+
     %{
       "foo" => %{
         "USD/2" => 500,
