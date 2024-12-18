@@ -907,6 +907,11 @@ defmodule NumscriptexTest do
       assert {:error, error} = Numscriptex.run(script, struct)
       assert error.reason == "panic: Variable is missing in json: user\n"
     end
+
+    test "fails with invalid arguments" do
+      assert {:error, error} = Numscriptex.run(%{script: ""}, %{})
+      assert error.reason == :badarg
+    end
   end
 
   defp build_run_struct(balances, metadata, variables) do

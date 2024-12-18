@@ -84,9 +84,6 @@ defmodule Numscriptex do
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
     do: error
 
-  defp process(input, _operation) when not is_binary(input),
-    do: {:error, %{reason: :invalid_input}}
-
   defp process(input, operation) do
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
     {:ok, stdin_pipe} = Wasmex.Pipe.new()
