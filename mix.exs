@@ -35,7 +35,7 @@ defmodule Numscriptex.MixProject do
       ci: [
         "format --check-formatted",
         "deps.unlock --check-unused",
-        "credo suggest --all --ignore design",
+        "credo suggest --all",
         "test"
       ]
     ]
