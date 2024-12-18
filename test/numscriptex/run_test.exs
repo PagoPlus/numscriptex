@@ -5,12 +5,11 @@ defmodule Numscriptex.RunTest do
 
   describe "new/0" do
     test "creates a new struct" do
-      assert {:ok, result} = Run.new()
-      assert result == %Run{
-        balances: %{},
-        metadata: %{},
-        variables: %{}
-      }
+      assert Run.new() == %Run{
+               balances: %{},
+               metadata: %{},
+               variables: %{}
+             }
     end
   end
 
