@@ -2,6 +2,7 @@ name: Elixir CI
 
 on:
   push:
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -51,14 +52,5 @@ jobs:
       - name: Compile
         run: mix compile --warnings-as-errors --force
 
-      - name: Check Formatting
-        run: mix format --check-formatted
-
-      - name: Check unused deps
-        run: mix deps.unlock --check-unused
-
-      - name: Credo
-        run: mix credo suggest --all
-
-      - name: Run Tests
-        run: mix test
+      - name: Check and test
+        run: mix ci
