@@ -3,6 +3,17 @@ defmodule Numscriptex.RunTest do
 
   alias Numscriptex.Run
 
+  describe "new/0" do
+    test "creates a new struct" do
+      assert {:ok, result} = Run.new()
+      assert result == %Run{
+        balances: %{},
+        metadata: %{},
+        variables: %{}
+      }
+    end
+  end
+
   describe "put/3" do
     test "put balances field with valid params" do
       balances = %{
