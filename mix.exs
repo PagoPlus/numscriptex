@@ -36,7 +36,7 @@ defmodule Numscriptex.MixProject do
         "format --check-formatted",
         "deps.unlock --check-unused",
         "credo suggest --all",
-        "test"
+        "coveralls.github"
       ]
     ]
   end
