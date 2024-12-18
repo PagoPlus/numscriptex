@@ -21,6 +21,9 @@ defmodule Numscriptex.Run do
           metadata: map()
         }
 
+  @spec new() :: t()
+  def new(), do: %__MODULE__{}
+
   @spec put(t(), atom(), map()) :: {:ok, t()} | {:error, atom(), map()}
   def put(_run_struct, field, _value) when field not in @valid_fields,
     do: {:error, :invalid_field, %{details: "The field '#{field}' does not exists."}}
