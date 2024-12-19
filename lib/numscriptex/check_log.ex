@@ -9,11 +9,11 @@ defmodule Numscriptex.CheckLog do
             message: nil
 
   @type t() :: %__MODULE__{
-    character:  integer(),
-    level: atom(),
-    line: integer(),
-    message: binary()
-  } 
+          character: integer(),
+          level: atom(),
+          line: integer(),
+          message: binary()
+        }
 
   @doc """
   Get a map with log data about a checked numscript.
@@ -41,20 +41,20 @@ defmodule Numscriptex.CheckLog do
   end
 
   defp normalize(map) do
-    Map.new(map, fn 
-      {:error, value} ->  
+    Map.new(map, fn
+      {:error, value} ->
         {:message, value}
 
-      {:warning, value} ->  
+      {:warning, value} ->
         {:message, value}
 
-      {:info, value} ->  
+      {:info, value} ->
         {:message, value}
 
-      {:hint, value} ->  
+      {:hint, value} ->
         {:message, value}
 
-      pair -> 
+      pair ->
         pair
     end)
   end

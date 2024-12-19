@@ -1,6 +1,10 @@
 defmodule NumscriptexTest do
   use ExUnit.Case
 
+  alias Numscriptex.CheckLog
+
+  doctest Numscriptex
+
   describe "check/1" do
     setup do
       script = """
@@ -41,22 +45,20 @@ defmodule NumscriptexTest do
 
     test "with valid script", %{script: script} do
       assert {:ok, result} = Numscriptex.check(script)
-      assert is_map(result)
       assert result.script == script
     end
 
     test "with valid script, but unused var", %{warning_script: warning_script} do
       assert {:ok, result} = Numscriptex.check(warning_script)
-      assert is_map(result)
       assert result.script == warning_script
 
       assert result.details == %{
-               "warnings" => [
-                 %{
-                   "character" => 10,
-                   "level" => "warning",
-                   "line" => 1,
-                   "warning" => "The variable '$unused' is never used"
+               warnings: [
+                 %CheckLog{
+                   character: 10,
+                   level: :warning,
+                   line: 1,
+                   message: "The variable '$unused' is never used"
                  }
                ]
              }
@@ -69,14 +71,14 @@ defmodule NumscriptexTest do
     test "with invalid script", %{script: script} do
       error_script = String.replace(script, "a", "e")
 
-      assert {:error, result} = Numscriptex.check(error_script)
-      assert [error | _errors] = result["errors"]
+      assert {:error, %{reason: reason}} = Numscriptex.check(error_script)
+      assert [error | _errors] = reason.errors
 
-      assert error == %{
-               "character" => 0,
-               "level" => "error",
-               "line" => 0,
-               "error" => "The function 'vers' does not exist"
+      assert error == %CheckLog{
+               character: 0,
+               level: :error,
+               line: 0,
+               message: "The function 'vers' does not exist"
              }
     end
   end
@@ -98,33 +100,33 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
+      assert result.postings == [
                %{
-                 "amount" => 100,
-                 "asset" => "USD/2",
-                 "destination" => "bar",
-                 "source" => "foo"
+                 amount: 100,
+                 asset: "USD/2",
+                 destination: "bar",
+                 source: "foo"
                }
              ]
 
-      assert result["balances"] == [
+      assert result.balances == [
                %{
-                 "account" => "foo",
-                 "asset" => "EUR/2",
-                 "final_balance" => 300,
-                 "initial_balance" => 300
+                 account: "foo",
+                 asset: "EUR/2",
+                 final_balance: 300,
+                 initial_balance: 300
                },
                %{
-                 "account" => "foo",
-                 "asset" => "USD/2",
-                 "final_balance" => 400,
-                 "initial_balance" => 500
+                 account: "foo",
+                 asset: "USD/2",
+                 final_balance: 400,
+                 initial_balance: 500
                },
                %{
-                 "account" => "bar",
-                 "asset" => "USD/2",
-                 "final_balance" => 100,
-                 "initial_balance" => 0
+                 account: "bar",
+                 asset: "USD/2",
+                 final_balance: 100,
+                 initial_balance: 0
                }
              ]
     end
@@ -150,24 +152,14 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
-               %{"amount" => 100, "asset" => "USD/2", "destination" => "bar", "source" => "foo"},
-               %{"amount" => 100, "asset" => "USD/2", "destination" => "baz", "source" => "bar"}
+      assert result.postings == [
+               %{amount: 100, asset: "USD/2", destination: "bar", source: "foo"},
+               %{amount: 100, asset: "USD/2", destination: "baz", source: "bar"}
              ]
 
-      assert result["balances"] == [
-               %{
-                 "account" => "foo",
-                 "asset" => "USD/2",
-                 "final_balance" => 400,
-                 "initial_balance" => 500
-               },
-               %{
-                 "account" => "baz",
-                 "asset" => "USD/2",
-                 "final_balance" => 100,
-                 "initial_balance" => 0
-               }
+      assert result.balances == [
+               %{account: "foo", asset: "USD/2", final_balance: 400, initial_balance: 500},
+               %{account: "baz", asset: "USD/2", final_balance: 100, initial_balance: 0}
              ]
     end
 
@@ -198,63 +190,63 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
+      assert result.postings == [
                %{
-                 "amount" => 5000,
-                 "asset" => "USD/2",
-                 "destination" => "orders:4567:payment",
-                 "source" => "users:1234:main"
+                 amount: 5000,
+                 asset: "USD/2",
+                 destination: "orders:4567:payment",
+                 source: "users:1234:main"
                },
                %{
-                 "amount" => 1000,
-                 "asset" => "USD/2",
-                 "destination" => "orders:4567:payment",
-                 "source" => "users:1234:vouchers:2024-01-31"
+                 amount: 1000,
+                 asset: "USD/2",
+                 destination: "orders:4567:payment",
+                 source: "users:1234:vouchers:2024-01-31"
                },
                %{
-                 "amount" => 3000,
-                 "asset" => "USD/2",
-                 "destination" => "orders:4567:payment",
-                 "source" => "users:1234:vouchers:2024-02-17"
+                 amount: 3000,
+                 asset: "USD/2",
+                 destination: "orders:4567:payment",
+                 source: "users:1234:vouchers:2024-02-17"
                },
                %{
-                 "amount" => 1000,
-                 "asset" => "USD/2",
-                 "destination" => "orders:4567:payment",
-                 "source" => "users:1234:vouchers:2024-03-22"
+                 amount: 1000,
+                 asset: "USD/2",
+                 destination: "orders:4567:payment",
+                 source: "users:1234:vouchers:2024-03-22"
                }
              ]
 
-      assert result["balances"] == [
+      assert result.balances == [
                %{
-                 "account" => "users:1234:main",
-                 "asset" => "USD/2",
-                 "final_balance" => 0,
-                 "initial_balance" => 5000
+                 account: "users:1234:main",
+                 asset: "USD/2",
+                 final_balance: 0,
+                 initial_balance: 5000
                },
                %{
-                 "account" => "users:1234:vouchers:2024-01-31",
-                 "asset" => "USD/2",
-                 "final_balance" => 0,
-                 "initial_balance" => 1000
+                 account: "users:1234:vouchers:2024-01-31",
+                 asset: "USD/2",
+                 final_balance: 0,
+                 initial_balance: 1000
                },
                %{
-                 "account" => "users:1234:vouchers:2024-02-17",
-                 "asset" => "USD/2",
-                 "final_balance" => 0,
-                 "initial_balance" => 3000
+                 account: "users:1234:vouchers:2024-02-17",
+                 asset: "USD/2",
+                 final_balance: 0,
+                 initial_balance: 3000
                },
                %{
-                 "account" => "users:1234:vouchers:2024-03-22",
-                 "asset" => "USD/2",
-                 "final_balance" => 9000,
-                 "initial_balance" => 10_000
+                 account: "users:1234:vouchers:2024-03-22",
+                 asset: "USD/2",
+                 final_balance: 9000,
+                 initial_balance: 10_000
                },
                %{
-                 "account" => "orders:4567:payment",
-                 "asset" => "USD/2",
-                 "final_balance" => 10_000,
-                 "initial_balance" => 0
+                 account: "orders:4567:payment",
+                 asset: "USD/2",
+                 final_balance: 10_000,
+                 initial_balance: 0
                }
              ]
     end
@@ -295,57 +287,52 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
+      assert result.postings == [
                %{
-                 "amount" => 2000,
-                 "asset" => "USD/2",
-                 "destination" => "payments:4567",
-                 "source" => "coupons:FALL24"
+                 amount: 2000,
+                 asset: "USD/2",
+                 destination: "payments:4567",
+                 source: "coupons:FALL24"
                },
                %{
-                 "amount" => 27_900,
-                 "asset" => "USD/2",
-                 "destination" => "payments:4567",
-                 "source" => "users:1234"
+                 amount: 27_900,
+                 asset: "USD/2",
+                 destination: "payments:4567",
+                 source: "users:1234"
                },
                %{
-                 "amount" => 900,
-                 "asset" => "USD/2",
-                 "destination" => "payments:5678",
-                 "source" => "coupons:FALL24"
+                 amount: 900,
+                 asset: "USD/2",
+                 destination: "payments:5678",
+                 source: "coupons:FALL24"
                },
-               %{
-                 "amount" => 8100,
-                 "asset" => "USD/2",
-                 "destination" => "payments:5678",
-                 "source" => "users:1234"
-               }
+               %{amount: 8100, asset: "USD/2", destination: "payments:5678", source: "users:1234"}
              ]
 
-      assert result["balances"] == [
+      assert result.balances == [
                %{
-                 "account" => "coupons:FALL24",
-                 "asset" => "USD/2",
-                 "final_balance" => 97_000,
-                 "initial_balance" => 99_900
+                 account: "coupons:FALL24",
+                 asset: "USD/2",
+                 final_balance: 97_000,
+                 initial_balance: 99_900
                },
                %{
-                 "account" => "users:1234",
-                 "asset" => "USD/2",
-                 "final_balance" => 64_000,
-                 "initial_balance" => 100_000
+                 account: "users:1234",
+                 asset: "USD/2",
+                 final_balance: 64_000,
+                 initial_balance: 100_000
                },
                %{
-                 "account" => "payments:4567",
-                 "asset" => "USD/2",
-                 "final_balance" => 29_900,
-                 "initial_balance" => 0
+                 account: "payments:4567",
+                 asset: "USD/2",
+                 final_balance: 29_900,
+                 initial_balance: 0
                },
                %{
-                 "account" => "payments:5678",
-                 "asset" => "USD/2",
-                 "final_balance" => 9000,
-                 "initial_balance" => 0
+                 account: "payments:5678",
+                 asset: "USD/2",
+                 final_balance: 9000,
+                 initial_balance: 0
                }
              ]
     end
@@ -369,40 +356,20 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
-               %{
-                 "amount" => 10,
-                 "asset" => "USD/2",
-                 "destination" => "platform:fees",
-                 "source" => "orders:1234"
-               },
-               %{
-                 "amount" => 90,
-                 "asset" => "USD/2",
-                 "destination" => "merchants:6789",
-                 "source" => "orders:1234"
-               }
+      assert result.postings == [
+               %{amount: 10, asset: "USD/2", destination: "platform:fees", source: "orders:1234"},
+               %{amount: 90, asset: "USD/2", destination: "merchants:6789", source: "orders:1234"}
              ]
 
-      assert result["balances"] == [
+      assert result.balances == [
                %{
-                 "account" => "orders:1234",
-                 "asset" => "USD/2",
-                 "final_balance" => 900,
-                 "initial_balance" => 1000
+                 account: "orders:1234",
+                 asset: "USD/2",
+                 final_balance: 900,
+                 initial_balance: 1000
                },
-               %{
-                 "account" => "platform:fees",
-                 "asset" => "USD/2",
-                 "final_balance" => 10,
-                 "initial_balance" => 0
-               },
-               %{
-                 "account" => "merchants:6789",
-                 "asset" => "USD/2",
-                 "final_balance" => 90,
-                 "initial_balance" => 0
-               }
+               %{account: "platform:fees", asset: "USD/2", final_balance: 10, initial_balance: 0},
+               %{account: "merchants:6789", asset: "USD/2", final_balance: 90, initial_balance: 0}
              ]
     end
 
@@ -432,63 +399,63 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
+      assert result.postings == [
                %{
-                 "amount" => 300,
-                 "asset" => "USD/2",
-                 "destination" => "platform:commission:sales_tax",
-                 "source" => "orders:1234"
+                 amount: 300,
+                 asset: "USD/2",
+                 destination: "platform:commission:sales_tax",
+                 source: "orders:1234"
                },
                %{
-                 "amount" => 1200,
-                 "asset" => "USD/2",
-                 "destination" => "platform:commission:revenue",
-                 "source" => "orders:1234"
+                 amount: 1200,
+                 asset: "USD/2",
+                 destination: "platform:commission:revenue",
+                 source: "orders:1234"
                },
                %{
-                 "amount" => 500,
-                 "asset" => "USD/2",
-                 "destination" => "users:1234:cashback",
-                 "source" => "orders:1234"
+                 amount: 500,
+                 asset: "USD/2",
+                 destination: "users:1234:cashback",
+                 source: "orders:1234"
                },
                %{
-                 "amount" => 8000,
-                 "asset" => "USD/2",
-                 "destination" => "merchants:6789",
-                 "source" => "orders:1234"
+                 amount: 8000,
+                 asset: "USD/2",
+                 destination: "merchants:6789",
+                 source: "orders:1234"
                }
              ]
 
-      assert result["balances"] == [
+      assert result.balances == [
                %{
-                 "account" => "orders:1234",
-                 "asset" => "USD/2",
-                 "final_balance" => 0,
-                 "initial_balance" => 10_000
+                 account: "orders:1234",
+                 asset: "USD/2",
+                 final_balance: 0,
+                 initial_balance: 10_000
                },
                %{
-                 "account" => "platform:commission:sales_tax",
-                 "asset" => "USD/2",
-                 "final_balance" => 300,
-                 "initial_balance" => 0
+                 account: "platform:commission:sales_tax",
+                 asset: "USD/2",
+                 final_balance: 300,
+                 initial_balance: 0
                },
                %{
-                 "account" => "platform:commission:revenue",
-                 "asset" => "USD/2",
-                 "final_balance" => 1200,
-                 "initial_balance" => 0
+                 account: "platform:commission:revenue",
+                 asset: "USD/2",
+                 final_balance: 1200,
+                 initial_balance: 0
                },
                %{
-                 "account" => "users:1234:cashback",
-                 "asset" => "USD/2",
-                 "final_balance" => 500,
-                 "initial_balance" => 0
+                 account: "users:1234:cashback",
+                 asset: "USD/2",
+                 final_balance: 500,
+                 initial_balance: 0
                },
                %{
-                 "account" => "merchants:6789",
-                 "asset" => "USD/2",
-                 "final_balance" => 8000,
-                 "initial_balance" => 0
+                 account: "merchants:6789",
+                 asset: "USD/2",
+                 final_balance: 8000,
+                 initial_balance: 0
                }
              ]
     end
@@ -509,28 +476,13 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
-               %{
-                 "amount" => 500,
-                 "asset" => "USD/2",
-                 "destination" => "payment",
-                 "source" => "users:1234"
-               }
+      assert result.postings == [
+               %{amount: 500, asset: "USD/2", destination: "payment", source: "users:1234"}
              ]
 
-      assert result["balances"] == [
-               %{
-                 "account" => "users:1234",
-                 "asset" => "USD/2",
-                 "final_balance" => 0,
-                 "initial_balance" => 500
-               },
-               %{
-                 "account" => "payment",
-                 "asset" => "USD/2",
-                 "final_balance" => 500,
-                 "initial_balance" => 0
-               }
+      assert result.balances == [
+               %{account: "users:1234", asset: "USD/2", final_balance: 0, initial_balance: 500},
+               %{account: "payment", asset: "USD/2", final_balance: 500, initial_balance: 0}
              ]
     end
 
@@ -558,51 +510,41 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
+      assert result.postings == [
+               %{amount: 100, asset: "USD/2", destination: "payments:4567", source: "users:1234"},
                %{
-                 "amount" => 100,
-                 "asset" => "USD/2",
-                 "destination" => "payments:4567",
-                 "source" => "users:1234"
+                 amount: 1000,
+                 asset: "USD/2",
+                 destination: "payments:4567",
+                 source: "users:2345:credit"
                },
                %{
-                 "amount" => 1000,
-                 "asset" => "USD/2",
-                 "destination" => "payments:4567",
-                 "source" => "users:2345:credit"
-               },
-               %{
-                 "amount" => 5000,
-                 "asset" => "USD/2",
-                 "destination" => "payments:4567",
-                 "source" => "users:2345:main"
+                 amount: 5000,
+                 asset: "USD/2",
+                 destination: "payments:4567",
+                 source: "users:2345:main"
                }
              ]
 
-      assert result["balances"] == [
+      assert result.balances == [
                %{
-                 "account" => "users:2345:main",
-                 "asset" => "USD/2",
-                 "final_balance" => 0,
-                 "initial_balance" => 5000
+                 account: "users:2345:main",
+                 asset: "USD/2",
+                 final_balance: 0,
+                 initial_balance: 5000
+               },
+               %{account: "users:1234", asset: "USD/2", final_balance: -100, initial_balance: 0},
+               %{
+                 account: "payments:4567",
+                 asset: "USD/2",
+                 final_balance: 6100,
+                 initial_balance: 0
                },
                %{
-                 "account" => "users:1234",
-                 "asset" => "USD/2",
-                 "final_balance" => -100,
-                 "initial_balance" => 0
-               },
-               %{
-                 "account" => "payments:4567",
-                 "asset" => "USD/2",
-                 "final_balance" => 6100,
-                 "initial_balance" => 0
-               },
-               %{
-                 "account" => "users:2345:credit",
-                 "asset" => "USD/2",
-                 "final_balance" => -1000,
-                 "initial_balance" => 0
+                 account: "users:2345:credit",
+                 asset: "USD/2",
+                 final_balance: -1000,
+                 initial_balance: 0
                }
              ]
     end
@@ -626,28 +568,13 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
-               %{
-                 "amount" => 5,
-                 "asset" => "USD/2",
-                 "destination" => "platform:fees",
-                 "source" => "users:1234"
-               }
+      assert result.postings == [
+               %{amount: 5, asset: "USD/2", destination: "platform:fees", source: "users:1234"}
              ]
 
-      assert result["balances"] == [
-               %{
-                 "account" => "users:1234",
-                 "asset" => "USD/2",
-                 "final_balance" => 495,
-                 "initial_balance" => 500
-               },
-               %{
-                 "account" => "platform:fees",
-                 "asset" => "USD/2",
-                 "final_balance" => 5,
-                 "initial_balance" => 0
-               }
+      assert result.balances == [
+               %{account: "users:1234", asset: "USD/2", final_balance: 495, initial_balance: 500},
+               %{account: "platform:fees", asset: "USD/2", final_balance: 5, initial_balance: 0}
              ]
     end
 
@@ -679,57 +606,22 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
-               %{"amount" => 50, "asset" => "USD/2", "destination" => "bar", "source" => "foo"},
-               %{"amount" => 49, "asset" => "USD/2", "destination" => "baz", "source" => "foo"},
-               %{"amount" => 20, "asset" => "USD/2", "destination" => "b", "source" => "a"},
-               %{"amount" => 20, "asset" => "USD/2", "destination" => "c", "source" => "a"},
-               %{"amount" => 59, "asset" => "USD/2", "destination" => "d", "source" => "a"}
+      assert result.postings == [
+               %{amount: 50, asset: "USD/2", destination: "bar", source: "foo"},
+               %{amount: 49, asset: "USD/2", destination: "baz", source: "foo"},
+               %{amount: 20, asset: "USD/2", destination: "b", source: "a"},
+               %{amount: 20, asset: "USD/2", destination: "c", source: "a"},
+               %{amount: 59, asset: "USD/2", destination: "d", source: "a"}
              ]
 
-      assert result["balances"] == [
-               %{
-                 "account" => "a",
-                 "asset" => "USD/2",
-                 "final_balance" => 901,
-                 "initial_balance" => 1000
-               },
-               %{
-                 "account" => "foo",
-                 "asset" => "USD/2",
-                 "final_balance" => 901,
-                 "initial_balance" => 1000
-               },
-               %{
-                 "account" => "bar",
-                 "asset" => "USD/2",
-                 "final_balance" => 50,
-                 "initial_balance" => 0
-               },
-               %{
-                 "account" => "baz",
-                 "asset" => "USD/2",
-                 "final_balance" => 49,
-                 "initial_balance" => 0
-               },
-               %{
-                 "account" => "b",
-                 "asset" => "USD/2",
-                 "final_balance" => 20,
-                 "initial_balance" => 0
-               },
-               %{
-                 "account" => "c",
-                 "asset" => "USD/2",
-                 "final_balance" => 20,
-                 "initial_balance" => 0
-               },
-               %{
-                 "account" => "d",
-                 "asset" => "USD/2",
-                 "final_balance" => 59,
-                 "initial_balance" => 0
-               }
+      assert result.balances == [
+               %{account: "a", asset: "USD/2", final_balance: 901, initial_balance: 1000},
+               %{account: "foo", asset: "USD/2", final_balance: 901, initial_balance: 1000},
+               %{account: "bar", asset: "USD/2", final_balance: 50, initial_balance: 0},
+               %{account: "baz", asset: "USD/2", final_balance: 49, initial_balance: 0},
+               %{account: "b", asset: "USD/2", final_balance: 20, initial_balance: 0},
+               %{account: "c", asset: "USD/2", final_balance: 20, initial_balance: 0},
+               %{account: "d", asset: "USD/2", final_balance: 59, initial_balance: 0}
              ]
     end
 
@@ -758,39 +650,29 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
+      assert result.postings == [
+               %{amount: 20, asset: "USD/2", destination: "platform:tax", source: "users:1234"},
                %{
-                 "amount" => 20,
-                 "asset" => "USD/2",
-                 "destination" => "platform:tax",
-                 "source" => "users:1234"
-               },
-               %{
-                 "amount" => 80,
-                 "asset" => "USD/2",
-                 "destination" => "platform:revenue",
-                 "source" => "users:1234"
+                 amount: 80,
+                 asset: "USD/2",
+                 destination: "platform:revenue",
+                 source: "users:1234"
                }
              ]
 
-      assert result["balances"] == [
+      assert result.balances == [
                %{
-                 "account" => "users:1234",
-                 "asset" => "USD/2",
-                 "final_balance" => 9900,
-                 "initial_balance" => 10_000
+                 account: "users:1234",
+                 asset: "USD/2",
+                 final_balance: 9900,
+                 initial_balance: 10_000
                },
+               %{account: "platform:tax", asset: "USD/2", final_balance: 20, initial_balance: 0},
                %{
-                 "account" => "platform:tax",
-                 "asset" => "USD/2",
-                 "final_balance" => 20,
-                 "initial_balance" => 0
-               },
-               %{
-                 "account" => "platform:revenue",
-                 "asset" => "USD/2",
-                 "final_balance" => 80,
-                 "initial_balance" => 0
+                 account: "platform:revenue",
+                 asset: "USD/2",
+                 final_balance: 80,
+                 initial_balance: 0
                }
              ]
     end
@@ -824,39 +706,34 @@ defmodule NumscriptexTest do
 
       assert {:ok, result} = Numscriptex.run(script, struct)
 
-      assert result["postings"] == [
+      assert result.postings == [
                %{
-                 "amount" => 150,
-                 "asset" => "USD/2",
-                 "destination" => "platform:fees",
-                 "source" => "orders:2345"
+                 amount: 150,
+                 asset: "USD/2",
+                 destination: "platform:fees",
+                 source: "orders:2345"
                },
                %{
-                 "amount" => 850,
-                 "asset" => "USD/2",
-                 "destination" => "merchants:1234",
-                 "source" => "orders:2345"
+                 amount: 850,
+                 asset: "USD/2",
+                 destination: "merchants:1234",
+                 source: "orders:2345"
                }
              ]
 
-      assert result["balances"] == [
+      assert result.balances == [
+               %{account: "orders:2345", asset: "USD/2", final_balance: 0, initial_balance: 1000},
                %{
-                 "account" => "orders:2345",
-                 "asset" => "USD/2",
-                 "final_balance" => 0,
-                 "initial_balance" => 1000
+                 account: "platform:fees",
+                 asset: "USD/2",
+                 final_balance: 150,
+                 initial_balance: 0
                },
                %{
-                 "account" => "platform:fees",
-                 "asset" => "USD/2",
-                 "final_balance" => 150,
-                 "initial_balance" => 0
-               },
-               %{
-                 "account" => "merchants:1234",
-                 "asset" => "USD/2",
-                 "final_balance" => 850,
-                 "initial_balance" => 0
+                 account: "merchants:1234",
+                 asset: "USD/2",
+                 final_balance: 850,
+                 initial_balance: 0
                }
              ]
     end
@@ -878,7 +755,7 @@ defmodule NumscriptexTest do
       assert {:error, error} = Numscriptex.run(script, struct)
 
       assert error.reason ==
-               "panic: Not enough funds. Needed [USD/2 100] (only [USD/2 99] available)\n"
+               "Not enough funds. Needed [USD/2 100] (only [USD/2 99] available)"
     end
 
     test "with variables missing" do
@@ -905,7 +782,7 @@ defmodule NumscriptexTest do
       struct = build_run_struct(balances, metadata, variables)
 
       assert {:error, error} = Numscriptex.run(script, struct)
-      assert error.reason == "panic: Variable is missing in json: user\n"
+      assert error.reason == "Variable is missing in json: user"
     end
 
     test "fails with invalid arguments" do

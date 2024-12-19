@@ -17,6 +17,7 @@ defmodule Common do
   %{"foo" => 100}
   ```
   """
+  @spec normalize_keys(map(), :string | :atom) :: map()
   def normalize_keys(map, :string) when is_map(map) do
     Map.new(map, &keys_to_string/1)
   end
@@ -28,11 +29,17 @@ defmodule Common do
   defp keys_to_string({key, value}) when is_map(value),
     do: {to_string(key), normalize_keys(value, :string)}
 
+  defp keys_to_string({key, value}) when is_list(value),
+    do: {to_string(key), Enum.map(value, &normalize_keys(&1, :string))}
+
   defp keys_to_string({key, value}),
     do: {to_string(key), value}
 
   defp keys_to_atom({key, value}) when is_map(value),
     do: {String.to_atom(key), normalize_keys(value, :atom)}
+
+  defp keys_to_atom({key, value}) when is_list(value),
+    do: {String.to_atom(key), Enum.map(value, &normalize_keys(&1, :atom))}
 
   defp keys_to_atom({key, value}),
     do: {String.to_atom(key), value}

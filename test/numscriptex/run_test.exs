@@ -1,11 +1,12 @@
 defmodule Numscriptex.RunTest do
   use ExUnit.Case
+  doctest Numscriptex.Run
 
   alias Numscriptex.Run
 
   describe "new/0" do
     test "creates a new struct" do
-      assert Run.new() == %Run{
+      assert Run.new() === %Run{
                balances: %{},
                metadata: %{},
                variables: %{}

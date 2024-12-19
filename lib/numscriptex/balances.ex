@@ -1,48 +1,57 @@
 defmodule Numscriptex.Balances do
   @moduledoc """
-  Build the account's final balance based of the postings field that you get
-  after running your numscript. For example, if your input balance was:
+  `Numscriptex.Balances` is responsible for building the account's final balance
+  after running your [numscript](https://docs.formance.com/numscript/).
+  """
 
-    %{
-      "foo" => %{
-        "USD/2" => 500,
-        "EUR/2" => 300
-      }
+  @doc """
+  Receives the account assets (balance field from `%Numscriptex.Run{}`), and the 
+  postings that are generated after running the numscript transaction. 
+
+  The result will be a map contaning the initial and final balances of each
+  account assets. Ex:
+
+  ```elixir
+  account_assets = %{
+    "foo" => %{
+      "USD/2" => 500,
+      "EUR/2" => 300
     }
+  }
 
-  And the postings:
+  postings = [
+    %{
+      "amount" => 100,
+      "asset" => "USD/2",
+      "destination" => "bar",
+      "source" => "foo"
+    }
+  ]
+   
+  Numscriptex.Balances.put(account_assets, postings)
+  # The following balances will be generated:
 
-    [
-      %{
-        "amount" => 100,
-        "asset" => "USD/2",
-        "destination" => "bar",
-        "source" => "foo"
-      }
-    ]
-
-  The following balances will be generated:
-
-    [
-      %{
-        "account" => "foo",
-        "asset" => "EUR/2",
-        "final_balance" => 300,
-        "initial_balance" => 300
-      },
-      %{
-        "account" => "foo",
-        "asset" => "USD/2",
-        "final_balance" => 400,
-        "initial_balance" => 500
-      },
-      %{
-        "account" => "bar",
-        "asset" => "USD/2",
-        "final_balance" => 100,
-        "initial_balance" => 0
-      }
-    ]
+  [
+    %{
+      "account" => "foo",
+      "asset" => "EUR/2",
+      "final_balance" => 300,
+      "initial_balance" => 300
+    },
+    %{
+      "account" => "foo",
+      "asset" => "USD/2",
+      "final_balance" => 400,
+      "initial_balance" => 500
+    },
+    %{
+      "account" => "bar",
+      "asset" => "USD/2",
+      "final_balance" => 100,
+      "initial_balance" => 0
+    }
+  ]
+  ```
   """
   @spec put(map(), list()) :: list(map())
   def put(account_assets, postings) do

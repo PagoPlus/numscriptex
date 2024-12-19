@@ -41,7 +41,7 @@ defmodule Numscriptex.BalancesTest do
       assert balances == target
     end
 
-    test "builded balances does not affect unused assets", %{postings: postings} do
+    test "built balances does not affect unused assets", %{postings: postings} do
       initial_balances = %{
         "bar" => %{"USD/2" => 0, "BRL/2" => 10},
         "baz" => %{"USD/2" => 0, "EUR/2" => 50},

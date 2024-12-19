@@ -1,10 +1,17 @@
 # NumscripEx
-NumscriptEx allows its users to check and run numscripts via Elixir. 
+[Numscript](https://docs.formance.com/numscript/) is a DSL made by [Formance](https://www.formance.com/)
+that simplifies complex financial transactions with scripts that are easy to read,
+so yout don't need a big, complex and error-prone codebase to deal with your finances.
+
+You can see and execute some examples on the [Numscript Playground](https://playground.numscript.org/?template=simple-send).
+
+`NumscriptEx` is a library that allows its users to check and run said numscripts
+via Elixir.
 
 ## Installation
 You will just need to add `:numscriptex` as a dependency on your `mix.exs`, and run the `mix deps.get` command:
 
-```
+```elixir
 def deps do
   [
     {:numscriptex, "~> 0.1.0"}
@@ -13,71 +20,107 @@ end
 ```
 
 ## Usage
-This library basically have two core functions: `Numscriptex.check/1` and `Numscriptex.run/2`. Both functions return a two element tuple, where the first element is either `:ok` or `:error`, and the second element will always be a map with the `:reason` (and sometimes `:details`) keys.
+This library basically has two core functions: `Numscriptex.check/1` and `Numscriptex.run/2`.
 
-Before we talk about these two functions, I need to explain the `Numscriptex.Run`module first.
+Want to check if your script is valid and ready to go? Use the `check/1` function.
+Already checked the script and want to execute him? Use the `run/2` function.
+
+But before introducing these two functions, you will need to know what is the `Numscriptex.Run` module.
 
 ### Numscriptex.Run
-This module is an abstraction of the json input that the numscript needs to run correctly. If yout don't know what this "input" is, you can check the [Numscript playground](https://playground.numscript.org/?template=simple-send).
+A numscript needs some other data aside the script itself to run correctly, and
+`Numscriptex.Run` solve this problem.
+
+If you want to know what exactly these additional data are, you can see the 
+[numscript playground](https://playground.numscript.org/?template=simple-send) for examples.
 
 The abstraction is made by creating a struct:
-```
+```elixir
 iex>  %Numscriptex.Run{
-iex>    balances: %{},
-iex>    metadata: %{},
-iex>    variables: %{}
-iex>  }
+...>    balances: %{},
+...>    metadata: %{},
+...>    variables: %{}
+...>  }
+```
+Where:
+- `balances`: are a map with the account assets balance;
+- `metadata`: metada variables;
+- `variables`: used for variables injection.
+
+You can read more about Metadata clicking [here](https://docs.formance.com/numscript/reference/metadata)
+and more about Variables clicking [here](https://docs.formance.com/numscript/reference/variables)
+
+And to create a new struct, you can use the `put/3` or `put!/3` functions. Ex:
+```elixir
+iex>  variables = %{"order" => "orders:2345"}
+...>  balances = %{"orders:2345" => %{"USD/2" => 1000}}
+...>
+...>  metadata = %{
+...>    "merchants:1234" => %{"commission" => "15%"},
+...>    "orders:2345" => %{"merchant" => "merchants:1234"}
+...>  }
+...>
+...>  Numscriptex.Run.new()
+...>    |> Numscriptex.Run.put!(:balances, balances)
+...>	|> Numscriptex.Run.put!(:metadata, metadata)
+...>	|> Numscriptex.Run.put!(:variables, variables)
 ```
 
-And to create a new one, you can use the `put/3` or `put!/3` functions. Ex: 
+Will return:
+
+```elixir
+iex> %Numscriptex.Run{
+...>   variables: %{"orders:2345" => %{"USD/2" => 1000}},
+...>   balances: %{"order" => "orders:2345"},
+...>   metadata: %{
+...>     "merchants:1234" => %{"commission" => "15%"},
+...>     "orders:2345" => %{"merchant" => "merchants:1234"}
+...>   }
+...> }
 ```
-iex>  Numscriptex.Run.new()
-iex>    |> Numscriptex.Run.put!(:balances, balances)
-iex>	|> Numscriptex.Run.put!(:metadata, metadata)
-iex>	|> Numscriptex.Run.put!(:variables, variables)
-```
+
+And a kindly reminder that you will always need a valid `Numscriptex.Run` struct
+to successfully execute your scripts.
 
 ### Check
 To use `check/1` you just have to pass your numscript as it's argument. Ex:
+
+```elixir
+iex>  "tmp/script.num"
+...>  |> File.read!()
+...>  |> Numscriptex.check()
+{:ok, %{script: script}
 ```
-iex>  "your_path/your_file.num"
-iex>  |> File.read!()
-iex>  |> Numscriptex.check()
-```
+
 You don´t need to necessarily read from a file, as long as it is a binary it's fine.
 
-The code above will return:
-```
-	{:ok, %{script: <your_script>}}
-```
-
 If have any, it could also return some warnings, infos or hints inside the map.
-```
-	{:ok, %{
-			script: <your_script>,
-			warnings: <warnings_list>,
-			hints: <hints_list>,
-			infos: <infos_list>
-		}
-	}
+```elixir
+iex> {:ok, %{
+...>     script: <your_script>,
+...>     warnings: <warnings_list>,
+...>     hints: <hints_list>,
+...>     infos: <infos_list>
+...>   }
+...> }
 ```
 
 ### Run
 To use `run/2` your first argument must be your script (the same you used in `check/1`), and the second must be the `%Numscriptex.Run{}` struct. Ex:
 
-```
-  iex>  Numscriptex.run(script, struct)
-  {:ok, result}
+```elixir
+iex>  Numscriptex.run(script, struct)
+{:ok, result}
 ```
 
 Where result will be something like this: 
-```
-    %{
-      "postings" => postings # a list with maps
-      "balances" => balances # also a list with maps
-      "accountMeta" => %{} 
-      "txMeta" => %{} 
-    }
+```elixir
+iex> %{
+...>   postings: postings # a list with maps
+...>   balances: balances # also a list with maps
+...>   accountMeta: %{} 
+...>   txMeta: %{} 
+...> }
 ```
 
 ## License

@@ -1,67 +1,101 @@
 defmodule Numscriptex do
   @moduledoc """
-  NumscriptEx is a lib that allows its users to check and run numscripts via Elixir.
+  NumscriptEx is a library that allows its users to check and run [numscripts](https://docs.formance.com/numscript/)
+  via Elixir.
 
-  Both `check/1` and `run/2` functions will return a 2 element tuple, either
-  `{:ok, result}` or `{:error, reason}`. Both result and result will be maps.
-
-  To use `check/1` you just need to pass your numscript as its argument.
-  Ex:
-
-  iex>  "your_path/your_file.num"
-  iex>  |> File.read!()
-  iex>  |> Numscriptex.check()
-
-  Will return:
-    `{:ok, %{script: <your_script>}}`
-  It could also return some warnings, infos or hints inside the map.
-
-  To use `run/2` your first argument must be your script, and the second must
-  be a `%Numscriptex.Run{}` (go to Numscriptex.Run module to see more) struct.
-  Ex:
-   
-  iex>  struct = 
-  iex>    %Numscriptex.Run{}
-  iex>	  |> Numscriptex.Run.put!(:balances, balances)
-  iex>	  |> Numscriptex.Run.put!(:metadata, metadata)
-  iex>	  |> Numscriptex.Run.put!(:variables, variables)
-  iex>
-  iex>  Numscriptex.run(script, struct)
-
-  Will return:
-    {:ok, result} | {error, reason}
-
-  Where result will be something like this:
-    %{
-      "postings" => postings # a list with maps
-      "balances" => balances # also a list with maps
-      "accountMeta" => %{} 
-      "txMeta" => %{} 
-    }
+  Want to check if your script is valid and ready to go? Use the `check/1` function.
+  Already checked the script and want to execute him? Use the `run/2` function.
   """
 
   alias Numscriptex.Balances
+  alias Numscriptex.CheckLog
+
+  @type check_log() :: CheckLog.t()
+
+  @type check_result() :: %{
+          required(:script) => binary(),
+          optional(:hints) => list(check_log()),
+          optional(:infos) => list(check_log()),
+          optional(:warnings) => list(check_log())
+        }
+
+  @type run_result() :: %{
+          required(:balances) => balances(),
+          required(:postings) => postings(),
+          required(:accountMeta) => map(),
+          required(:txMeta) => map()
+        }
+
+  @type balances() :: %{
+          required(:initial_balance) => integer(),
+          required(:final_balance) => integer(),
+          required(:asset) => binary(),
+          required(:account) => binary()
+        }
+
+  @type postings() :: %{
+          required(:destination) => binary(),
+          required(:source) => binary(),
+          required(:asset) => binary(),
+          required(:amount) => integer()
+        }
+
+  @type errors() :: %{
+          required(:reason) => list(check_log()) | any(),
+          optional(:details) => any()
+        }
 
   @binary :numscriptex
           |> :code.priv_dir()
           |> Path.join("numscript.wasm")
           |> File.read!()
 
-  @spec check(binary()) :: {:ok, map()} | {:error, map()}
+  @doc """
+  To use `check/1` you just need to pass your numscript as its argument.
+  Ex:
+
+  ```elixir
+  iex> script = File.read!("tmp/script.num")   
+  iex> Numscriptex.check(script)
+  {:ok, %{script: script}}
+  ```
+
+  It could also return some warnings, infos or hints inside the map
+  """
+  @spec check(binary()) :: {:ok, check_result()} | {:error, errors()}
   def check(input) do
     case process(input, :check) do
       {:ok, details} ->
-        {:ok, %{script: input, details: details}}
+        {:ok, %{script: input, details: normalize_check_logs(details)}}
 
       :ok ->
         {:ok, %{script: input}}
 
-      error ->
-        error
+      {:error, %{reason: errors}} ->
+        {:error, %{reason: normalize_check_logs(errors)}}
     end
   end
 
-  @spec run(binary(), Numscriptex.Run.t()) :: {:ok, map()} | {:error, map()}
+  @doc """
+  To use `run/2` your first argument must be your script, and the second must
+  be a `%Numscriptex.Run{}` (go to Numscriptex.Run module to see more) struct.
+  Ex:
+   
+
+  ```elixir
+  iex> script = File.read!("tmp/script.num")
+  ...> balances = %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}}
+  ...> 
+  ...> struct = 
+  ...> Numscriptex.Run.new()
+  ...> |> Numscriptex.Run.put!(:balances, balances)
+  ...> |> Numscriptex.Run.put!(:metadata, %{})
+  ...> |> Numscriptex.Run.put!(:variables, %{})
+  ...>
+  ...> Numscriptex.run(script, struct)
+  ```
+  """
+  @spec run(binary(), Numscriptex.Run.t()) :: {:ok, run_result()} | {:error, errors()}
   def run(numscript, %Numscriptex.Run{} = run_struct) do
     initial_balance = Map.get(run_struct, :balances)
 
@@ -78,7 +112,12 @@ defmodule Numscriptex do
   defp maybe_put_final_balance({:ok, %{"postings" => postings} = result}, initial_balance) do
     balances = Balances.put(initial_balance, postings)
 
-    {:ok, Map.put(result, "balances", balances)}
+    normalized_result =
+      result
+      |> Map.put("balances", balances)
+      |> Common.normalize_keys(:atom)
+
+    {:ok, normalized_result}
   end
 
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
@@ -115,6 +154,7 @@ defmodule Numscriptex do
         |> Jason.decode()
         |> handle_process()
         |> maybe_put_stderr(error)
+        |> handle_errors()
 
       {:error, _reason} ->
         GenServer.stop(pid)
@@ -128,6 +168,7 @@ defmodule Numscriptex do
         {:error, stdout}
         |> handle_process()
         |> maybe_put_stderr(error)
+        |> handle_errors()
     end
   end
 
@@ -158,7 +199,7 @@ defmodule Numscriptex do
 
   defp handle_process({:ok, %{"valid" => valid?, "errors" => _err} = result})
        when is_boolean(valid?) and not valid? do
-    {:error, Map.delete(result, "valid")}
+    {:error, %{reason: Map.delete(result, "valid")}}
   end
 
   defp handle_process({:ok, %{"postings" => postings} = result}) do
@@ -173,4 +214,49 @@ defmodule Numscriptex do
   defp handle_process({:ok, {:error, reason}}), do: {:error, %{reason: reason}}
   defp handle_process({:error, reason}), do: {:error, %{reason: reason}}
   defp handle_process({:ok, _data} = result), do: result
+
+  defp handle_errors({:ok, _} = result), do: result
+
+  defp handle_errors(:ok), do: :ok
+
+  defp handle_errors({:error, %{reason: reason, details: details}}) do
+    {:error, %{reason: normalize_error(reason), details: normalize_error(details)}}
+  end
+
+  defp handle_errors({:error, %{reason: reason}}) do
+    {:error, %{reason: normalize_error(reason)}}
+  end
+
+  defp normalize_error(error) when is_binary(error) do
+    error
+    |> String.replace("panic:", "")
+    |> String.trim()
+  end
+
+  defp normalize_error(error), do: error
+
+  defp normalize_check_logs(logs) do
+    logs
+    |> Common.normalize_keys(:atom)
+    |> check_log_level_to_atom()
+    |> check_logs_to_struct()
+    |> Enum.into(%{})
+  end
+
+  defp check_logs_to_struct(logs) do
+    Enum.map(logs, fn {key, value} ->
+      {key, Enum.map(value, &CheckLog.from_map/1)}
+    end)
+  end
+
+  defp check_log_level_to_atom(check_logs) do
+    Enum.flat_map(check_logs, fn {key, logs} ->
+      normalized_level_field =
+        Enum.map(logs, fn log ->
+          Map.update(log, :level, nil, &String.to_atom/1)
+        end)
+
+      Map.replace(check_logs, key, normalized_level_field)
+    end)
+  end
 end
