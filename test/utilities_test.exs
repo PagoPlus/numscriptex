@@ -17,14 +17,14 @@ defmodule UtilitiesTest do
       atom_keys_map = Utilities.normalize_keys(map, :atom)
 
       assert atom_keys_map === %{
-        foo: %{
-          bar: [
-            %{baz: 100},
-            %{fiz: 100},
-            %{buz: 100}
-            ]
-        }
-      }
+               foo: %{
+                 bar: [
+                   %{baz: 100},
+                   %{fiz: 100},
+                   %{buz: 100}
+                 ]
+               }
+             }
     end
 
     test "atom keys to string keys" do
@@ -34,20 +34,21 @@ defmodule UtilitiesTest do
             %{baz: 100},
             %{fiz: 100},
             %{buz: 100}
-            ]
-        }
-      }
-      string_keys_map = Utilities.normalize_keys(map, :string)
-
-      assert string_keys_map === %{
-        "foo" => %{
-          "bar" => [
-            %{"baz" => 100},
-            %{"fiz" => 100},
-            %{"buz" => 100}
           ]
         }
       }
+
+      string_keys_map = Utilities.normalize_keys(map, :string)
+
+      assert string_keys_map === %{
+               "foo" => %{
+                 "bar" => [
+                   %{"baz" => 100},
+                   %{"fiz" => 100},
+                   %{"buz" => 100}
+                 ]
+               }
+             }
     end
   end
 end

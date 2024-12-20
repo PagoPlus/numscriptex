@@ -789,12 +789,16 @@ defmodule NumscriptexTest do
       script = "sd ( source = @foo destination = @bar)"
 
       assert {:error, error} = Numscriptex.run(script, %Numscriptex.Run{})
-      assert error.details == "Got errors while parsing:\nmismatched input 'source' expecting {')', '[', RATIO_PORTION_LITERAL, PERCENTAGE_PORTION_LITERAL, STRING, NUMBER, VARIABLE_NAME, ACCOUNT, ASSET}\n  0 | sd ( source = @foo destination = @bar)\n    |      ~~~~~"
+
+      assert error.details ==
+               "Got errors while parsing:\nmismatched input 'source' expecting {')', '[', RATIO_PORTION_LITERAL, PERCENTAGE_PORTION_LITERAL, STRING, NUMBER, VARIABLE_NAME, ACCOUNT, ASSET}\n  0 | sd ( source = @foo destination = @bar)\n    |      ~~~~~"
     end
 
     test "fails with invalid script but valid sctruct" do
       assert {:error, error} = Numscriptex.run(%{script: ""}, %Numscriptex.Run{})
-      assert error.reason == "json: cannot unmarshal object into Go struct field RunInputOpts.script of type string"
+
+      assert error.reason ==
+               "json: cannot unmarshal object into Go struct field RunInputOpts.script of type string"
     end
 
     test "fails with valid script but invalid sctruct" do
