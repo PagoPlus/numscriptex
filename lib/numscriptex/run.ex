@@ -1,10 +1,11 @@
 defmodule Numscriptex.Run do
   @moduledoc """
-  A [numscript](https://docs.formance.com/numscript/) needs some other data aside
-  the script itself to run correctly, and `Numscriptex.Run` solve this problem.
+  A [numscript](https://docs.formance.com/numscript/) needs some other data aside from
+  the script itself to run correctly, and `Numscriptex.Run` solves this problem.
 
-  If you want to know what exactly these additional data are, you can see the 
-  [numscript playground](https://playground.numscript.org/?template=simple-send) for examples.
+  If you want to know what exactly these additional fields are, you can learn more on 
+  [numscript playground](https://playground.numscript.org/?template=simple-send)
+  and the [numscript docs](https://docs.formance.com/numscript/).
   """
 
   defstruct variables: %{},
@@ -20,9 +21,9 @@ defmodule Numscriptex.Run do
   @typedoc """
   Type that represents `Numscriptex.Run` struct.
 
-  `:balances`: the account assets balance.
+  `:balances`: the account's assets balances.
   `:metadata`: metadata variables.
-  `:variables`: used for variables injection.
+  `:variables`: variables used inside the script.
   """
   @type t() :: %__MODULE__{
           variables: map(),
@@ -62,8 +63,19 @@ defmodule Numscriptex.Run do
     }
   }
   ```
+  If the value or the field key are invalid, `put/3` will return a 3 element
+  error tuple. Ex:
+
+  ```elixir
+  iex> struct = Numscriptex.Run.new()
+  ...>
+  ...> Numscriptex.Run.put(struct, :invalid_field, %{})
+  {:error, :invalid_field, %{details: "The field 'invalid_field' does not exists."}}
+  ```
   """
   @spec put(t(), atom(), map()) :: {:ok, t()} | {:error, atom(), map()}
+  def put(run_struct, field, value \\ %{})
+
   def put(_run_struct, field, _value) when field not in @valid_fields,
     do: {:error, :invalid_field, %{details: "The field '#{field}' does not exists."}}
 
@@ -71,7 +83,7 @@ defmodule Numscriptex.Run do
     do: {:error, :invalid_value, %{details: "Values argument must be a map."}}
 
   def put(%__MODULE__{} = run_struct, :balances, value) do
-    {:ok, Map.replace(run_struct, :balances, Common.normalize_keys(value, :string))}
+    {:ok, Map.replace(run_struct, :balances, Utilities.normalize_keys(value, :string))}
   end
 
   def put(%__MODULE__{} = run_struct, field, value) do

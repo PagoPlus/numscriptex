@@ -5,8 +5,7 @@ so yout don't need a big, complex and error-prone codebase to deal with your fin
 
 You can see and execute some examples on the [Numscript Playground](https://playground.numscript.org/?template=simple-send).
 
-`NumscriptEx` is a library that allows its users to check and run said numscripts
-via Elixir.
+`NumscriptEx` is a library that allows its users to check and run said numscripts in Elixir.
 
 ## Installation
 You will just need to add `:numscriptex` as a dependency on your `mix.exs`, and run the `mix deps.get` command:
@@ -23,13 +22,13 @@ end
 This library basically has two core functions: `Numscriptex.check/1` and `Numscriptex.run/2`.
 
 Want to check if your script is valid and ready to go? Use the `check/1` function.
-Already checked the script and want to execute him? Use the `run/2` function.
+Already checked the script and want to execute it? Use the `run/2` function.
 
-But before introducing these two functions, you will need to know what is the `Numscriptex.Run` module.
+But before introducing these two functions, you will need to know what is the `Numscriptex.Run` struct.
 
 ### Numscriptex.Run
 A numscript needs some other data aside the script itself to run correctly, and
-`Numscriptex.Run` solve this problem.
+`Numscriptex.Run` solves this problem.
 
 If you want to know what exactly these additional data are, you can see the 
 [numscript playground](https://playground.numscript.org/?template=simple-send) for examples.
@@ -43,9 +42,9 @@ iex>  %Numscriptex.Run{
 ...>  }
 ```
 Where:
-- `balances`: are a map with the account assets balance;
+- `balances`: are a map with the account's assets balances;
 - `metadata`: metada variables;
-- `variables`: used for variables injection.
+- `variables`: variables used inside the script.
 
 You can read more about Metadata clicking [here](https://docs.formance.com/numscript/reference/metadata)
 and more about Variables clicking [here](https://docs.formance.com/numscript/reference/variables)
@@ -79,8 +78,7 @@ iex> %Numscriptex.Run{
 ...> }
 ```
 
-And a kindly reminder that you will always need a valid `Numscriptex.Run` struct
-to successfully execute your scripts.
+Kindly reminder: you will always need a valid `Numscriptex.Run` struct to successfully execute your scripts.
 
 ### Check
 To use `check/1` you just have to pass your numscript as it's argument. Ex:
@@ -92,19 +90,42 @@ iex>  "tmp/script.num"
 {:ok, %{script: script}
 ```
 
-You don´t need to necessarily read from a file, as long as it is a binary it's fine.
+You don´t need to necessarily read from a file, as long as it is a string it's fine.
 
-If have any, it could also return some warnings, infos or hints inside the map.
+Sometimes, even if your script is valid, it could also return some warnings, infos or hints inside the map.
+Ex:
 ```elixir
 iex> {:ok, %{
-...>     script: <your_script>,
-...>     warnings: <warnings_list>,
-...>     hints: <hints_list>,
-...>     infos: <infos_list>
+...>     script: "your numscript here",
+...>     warnings: [
+...>             %CheckLog{
+...>               character: 10,
+...>               level: :warning,
+...>               line: 1,
+...>               message: "warning message"
+...>             }
+...>           ],
+...>     hints: [
+...>             %CheckLog{
+...>               character: 2,
+...>               level: :hint,
+...>               line: 7,
+...>               message: "hint message"
+...>             }
+...>           ],
+...>     infos: [
+...>             %CheckLog{
+...>               character: 9,
+...>               level: :info,
+...>               line: 14,
+...>               message: "info message"
+...>             }
+...>           ]
 ...>   }
 ...> }
 ```
-
+`:script` is the only key that will always return if your script is valid, the 
+other three are optional.
 ### Run
 To use `run/2` your first argument must be your script (the same you used in `check/1`), and the second must be the `%Numscriptex.Run{}` struct. Ex:
 
@@ -116,8 +137,34 @@ iex>  Numscriptex.run(script, struct)
 Where result will be something like this: 
 ```elixir
 iex> %{
-...>   postings: postings # a list with maps
-...>   balances: balances # also a list with maps
+...>   postings: [
+...>           %{
+...>             amount: 100,
+...>             asset: "USD/2",
+...>             destination: "bar",
+...>             source: "foo"
+...>           }
+...>         ],
+...>   balances: [
+...>           %{
+...>             account: "foo",
+...>             asset: "EUR/2",
+...>             final_balance: 300,
+...>             initial_balance: 300
+...>           },
+...>           %{
+...>             account: "foo",
+...>             asset: "USD/2",
+...>             final_balance: 400,
+...>             initial_balance: 500
+...>           },
+...>           %{
+...>             account: "bar",
+...>             asset: "USD/2",
+...>             final_balance: 100,
+...>             initial_balance: 0
+...>           }
+...>         ],
 ...>   accountMeta: %{} 
 ...>   txMeta: %{} 
 ...> }

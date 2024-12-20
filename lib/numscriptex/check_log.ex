@@ -1,7 +1,7 @@
 defmodule Numscriptex.CheckLog do
   @moduledoc """
-  `Numscriptex.CheckLog` is resposible for a better user experience with the 
-  logs you get after checking your script with `Numscriptex.check/1`.
+  After you check your numscript you might get a variety of logs even if it is valid,
+  `Numscriptex.CheckLog` is responsible for standardize these logs.
   """
   defstruct character: nil,
             level: nil,

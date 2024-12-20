@@ -10,7 +10,11 @@ defmodule Numscriptex.MixProject do
       aliases: aliases(),
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test, ci: :test]
+      preferred_cli_env: [
+        "coveralls.html": :test,
+        coveralls: :test,
+        ci: :test
+      ]
     ]
   end
 
@@ -24,6 +28,7 @@ defmodule Numscriptex.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:jason, "~> 1.4"},
       {:wasmex, "~> 0.9.2"},
       {:excoveralls, "~> 0.18", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
@@ -35,7 +40,7 @@ defmodule Numscriptex.MixProject do
       ci: [
         "format --check-formatted",
         "deps.unlock --check-unused",
-        "credo suggest --all",
+        "credo suggest --strict --all",
         "test"
       ]
     ]

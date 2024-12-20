@@ -1,7 +1,8 @@
 defmodule Numscriptex.Balances do
   @moduledoc """
   `Numscriptex.Balances` is responsible for building the account's final balance
-  after running your [numscript](https://docs.formance.com/numscript/).
+  after running your [numscript](https://docs.formance.com/numscript/), so you
+  can see the results of all transactions.
   """
 
   @doc """
@@ -12,25 +13,23 @@ defmodule Numscriptex.Balances do
   account assets. Ex:
 
   ```elixir
-  account_assets = %{
-    "foo" => %{
-      "USD/2" => 500,
-      "EUR/2" => 300
-    }
-  }
-
-  postings = [
-    %{
-      "amount" => 100,
-      "asset" => "USD/2",
-      "destination" => "bar",
-      "source" => "foo"
-    }
-  ]
-   
-  Numscriptex.Balances.put(account_assets, postings)
-  # The following balances will be generated:
-
+  iex> account_assets = %{
+  ...>     "foo" => %{
+  ...>     "USD/2" => 500,
+  ...>     "EUR/2" => 300
+  ...>   }
+  ...> }
+  ...>
+  ...> postings = [
+  ...>   %{
+  ...>     "amount" => 100,
+  ...>     "asset" => "USD/2",
+  ...>     "destination" => "bar",
+  ...>     "source" => "foo"
+  ...>   }
+  ...> ]
+  ...>  
+  ...> Numscriptex.Balances.put(account_assets, postings)
   [
     %{
       "account" => "foo",

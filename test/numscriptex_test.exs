@@ -63,7 +63,7 @@ defmodule NumscriptexTest do
                ]
              }
 
-      has_errors? = Map.has_key?(result.details, "errors")
+      has_errors? = Map.has_key?(result.details, :errors)
 
       refute has_errors?
     end
@@ -785,8 +785,22 @@ defmodule NumscriptexTest do
       assert error.reason == "Variable is missing in json: user"
     end
 
-    test "fails with invalid arguments" do
-      assert {:error, error} = Numscriptex.run(%{script: ""}, %{})
+    test "fails with invalid script" do
+      script = "sd ( source = @foo destination = @bar)"
+
+      assert {:error, error} = Numscriptex.run(script, %Numscriptex.Run{})
+      assert error.details == "Got errors while parsing:\nmismatched input 'source' expecting {')', '[', RATIO_PORTION_LITERAL, PERCENTAGE_PORTION_LITERAL, STRING, NUMBER, VARIABLE_NAME, ACCOUNT, ASSET}\n  0 | sd ( source = @foo destination = @bar)\n    |      ~~~~~"
+    end
+
+    test "fails with invalid script but valid sctruct" do
+      assert {:error, error} = Numscriptex.run(%{script: ""}, %Numscriptex.Run{})
+      assert error.reason == "json: cannot unmarshal object into Go struct field RunInputOpts.script of type string"
+    end
+
+    test "fails with valid script but invalid sctruct" do
+      script = "send [USD/2 100] ( source = @foo destination = @bar)"
+
+      assert {:error, error} = Numscriptex.run(script, %{})
       assert error.reason == :badarg
     end
   end

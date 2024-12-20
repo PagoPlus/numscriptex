@@ -3,6 +3,8 @@ defmodule Numscriptex.BalancesTest do
 
   alias Numscriptex.Balances
 
+  doctest Balances
+
   setup_all do
     postings =
       [

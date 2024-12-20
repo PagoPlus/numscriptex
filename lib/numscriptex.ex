@@ -22,7 +22,7 @@ defmodule Numscriptex do
   @type run_result() :: %{
           required(:balances) => balances(),
           required(:postings) => postings(),
-          required(:accountMeta) => map(),
+          required(:accountsMeta) => map(),
           required(:txMeta) => map()
         }
 
@@ -104,9 +104,21 @@ defmodule Numscriptex do
     |> Jason.encode!()
     |> process(:run)
     |> maybe_put_final_balance(initial_balance)
+    |> standardize_run_result()
   end
 
   def run(_numscript, _run_struct), do: {:error, %{reason: :badarg}}
+
+  defp standardize_run_result({:ok, result}) do
+    standardized_result =
+      result
+      |> Map.put_new(:accountsMeta, %{})
+      |> Map.put_new(:txMeta, %{})
+
+    {:ok, standardized_result}
+  end
+
+  defp standardize_run_result({:error, _reason} = errors), do: errors
 
   defp maybe_put_final_balance({:ok, %{"postings" => postings} = result}, initial_balance) do
     balances = Balances.put(initial_balance, postings)
@@ -114,7 +126,7 @@ defmodule Numscriptex do
     normalized_result =
       result
       |> Map.put("balances", balances)
-      |> Common.normalize_keys(:atom)
+      |> Utilities.normalize_keys(:atom)
 
     {:ok, normalized_result}
   end
@@ -180,12 +192,6 @@ defmodule Numscriptex do
     if is_stderr_empty?, do: {:error, reason}, else: {:error, Map.put(reason, :details, stderr)}
   end
 
-  defp maybe_put_stderr({:error, reason}, stderr) do
-    error = {:error, %{reason: reason}}
-
-    maybe_put_stderr(error, stderr)
-  end
-
   defp maybe_put_stderr(data, _stderr), do: data
 
   defp handle_process({:ok, %{"valid" => valid?} = result}) when is_boolean(valid?) and valid? do
@@ -207,10 +213,6 @@ defmodule Numscriptex do
       else: {:ok, result}
   end
 
-  defp handle_process({:ok, %{"errors" => _errors} = result}),
-    do: {:error, Map.delete(result, "valid")}
-
-  defp handle_process({:ok, {:error, reason}}), do: {:error, %{reason: reason}}
   defp handle_process({:error, reason}), do: {:error, %{reason: reason}}
   defp handle_process({:ok, _data} = result), do: result
 
@@ -236,7 +238,7 @@ defmodule Numscriptex do
 
   defp normalize_check_logs(logs) do
     logs
-    |> Common.normalize_keys(:atom)
+    |> Utilities.normalize_keys(:atom)
     |> check_log_level_to_atom()
     |> check_logs_to_struct()
     |> Enum.into(%{})
@@ -252,7 +254,7 @@ defmodule Numscriptex do
     Enum.flat_map(check_logs, fn {key, logs} ->
       normalized_level_field =
         Enum.map(logs, fn log ->
-          Map.update(log, :level, nil, &String.to_atom/1)
+          Map.update(log, :level, nil, &String.to_existing_atom/1)
         end)
 
       Map.replace(check_logs, key, normalized_level_field)

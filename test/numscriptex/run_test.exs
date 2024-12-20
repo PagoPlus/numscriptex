@@ -1,8 +1,9 @@
 defmodule Numscriptex.RunTest do
   use ExUnit.Case
-  doctest Numscriptex.Run
 
   alias Numscriptex.Run
+
+  doctest Run
 
   describe "new/0" do
     test "creates a new struct" do
