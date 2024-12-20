@@ -4,7 +4,7 @@ defmodule Numscriptex.CheckLog do
   `Numscriptex.CheckLog` is responsible for standardize these logs.
   """
 
-  @derive Jason.Encoder
+  @derive JSON.Encoder
 
   defstruct character: nil,
             level: nil,

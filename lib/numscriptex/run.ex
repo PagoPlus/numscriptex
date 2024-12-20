@@ -8,7 +8,7 @@ defmodule Numscriptex.Run do
   and the [numscript docs](https://docs.formance.com/numscript/).
   """
 
-  @derive Jason.Encoder
+  @derive JSON.Encoder
 
   defstruct variables: %{},
             balances: %{},

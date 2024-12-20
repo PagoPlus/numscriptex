@@ -102,7 +102,7 @@ defmodule Numscriptex do
     run_struct
     |> Map.from_struct()
     |> Map.merge(%{script: numscript})
-    |> Jason.encode!()
+    |> JSON.encode!()
     |> process(:run)
     |> maybe_put_final_balance(initial_balance)
     |> standardize_run_result()
@@ -163,7 +163,7 @@ defmodule Numscriptex do
 
         stdout_pipe
         |> Wasmex.Pipe.read()
-        |> Jason.decode()
+        |> JSON.decode()
         |> handle_process()
         |> maybe_put_stderr(error)
         |> handle_errors()
