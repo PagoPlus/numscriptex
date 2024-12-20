@@ -44,7 +44,7 @@ defmodule Numscriptex.Run do
   ```
   """
   @spec new() :: t()
-  def new(), do: %__MODULE__{}
+  def new, do: %__MODULE__{}
 
   @doc """
   Puts the chosen value under the field key on the `Numscriptex.Run` struct as 
