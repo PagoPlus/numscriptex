@@ -58,3 +58,5 @@ jobs:
 
       - name: Test
         run: mix coveralls.github
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
