@@ -55,7 +55,7 @@ defmodule Numscriptex do
   Ex:
 
   ```elixir
-  iex> script = File.read!("tmp/script.num")   
+  iex> script = "send [USD/2 100] ( source = @foo destination = @bar)"
   iex> Numscriptex.check(script)
   {:ok, %{script: script}}
   ```
@@ -81,9 +81,8 @@ defmodule Numscriptex do
   be a `%Numscriptex.Run{}` (go to Numscriptex.Run module to see more) struct.
   Ex:
    
-
   ```elixir
-  iex> script = File.read!("tmp/script.num")
+  iex> script = "send [USD/2 100] ( source = @foo destination = @bar)"
   ...> balances = %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}}
   ...> 
   ...> struct = 
