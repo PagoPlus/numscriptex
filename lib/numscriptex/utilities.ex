@@ -1,6 +1,6 @@
-defmodule Utilities do
+defmodule Numscriptex.Utilities do
   @moduledoc """
-  `Utilities` module contain reusable code that are common in more than one module
+  `Numscriptex.Utilities` module contain reusable code that are common in more than one module
   of this library.
   """
 

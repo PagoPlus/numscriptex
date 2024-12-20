@@ -3,6 +3,9 @@ defmodule Numscriptex.CheckLog do
   After you check your numscript you might get a variety of logs even if it is valid,
   `Numscriptex.CheckLog` is responsible for standardize these logs.
   """
+
+  @derive Jason.Encoder
+
   defstruct character: nil,
             level: nil,
             line: nil,

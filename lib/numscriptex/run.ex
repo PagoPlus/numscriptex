@@ -8,9 +8,13 @@ defmodule Numscriptex.Run do
   and the [numscript docs](https://docs.formance.com/numscript/).
   """
 
+  @derive Jason.Encoder
+
   defstruct variables: %{},
             balances: %{},
             metadata: %{}
+
+  alias Numscriptex.Utilities
 
   @valid_fields ~w(
     variables

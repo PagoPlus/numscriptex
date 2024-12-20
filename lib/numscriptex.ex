@@ -9,6 +9,7 @@ defmodule Numscriptex do
 
   alias Numscriptex.Balances
   alias Numscriptex.CheckLog
+  alias Numscriptex.Utilities
 
   @type check_log() :: CheckLog.t()
 

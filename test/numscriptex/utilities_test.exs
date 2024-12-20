@@ -1,5 +1,8 @@
-defmodule UtilitiesTest do
+defmodule Numscriptex.UtilitiesTest do
   use ExUnit.Case
+
+  alias Numscriptex.Utilities
+
   doctest Utilities
 
   describe "normalize_keys/2" do
