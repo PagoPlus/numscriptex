@@ -27,7 +27,7 @@ jobs:
 
       - name: Restore the deps and _build cache
         uses: actions/cache@v4
-        id: restore-cache
+        id: cache
         env:
           OTP_VERSION: ${{ steps.beam.outputs.otp-version }}
           ELIXIR_VERSION: ${{ steps.beam.outputs.elixir-version }}
@@ -36,18 +36,25 @@ jobs:
           path: |
             deps
             _build
-          key: ${{ runner.os }}-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
+          key: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
 
       - name: Install mix dependencies
-        if: steps.restore-cache.outputs.cache-hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         run: mix deps.get
 
       - name: Compile dependencies
-        if: steps.restore-cache.outputs.cache-hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         run: mix deps.compile
 
       - name: Compile
         run: mix compile --warnings-as-errors --force
+
+      - name: Create PLTs
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: mix dialyzer --plt
+
+      - name: Run dialyzer
+        run: mix dialyzer --format github --format dialyxir
 
       - name: Check and Test
         run: mix ci
