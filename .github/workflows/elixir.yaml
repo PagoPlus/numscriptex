@@ -26,28 +26,40 @@ jobs:
           version-type: strict
 
       - name: Restore the deps and _build cache
-        uses: actions/cache@v4
-        id: restore-cache
+        uses: actions/cache/restore@v3
+        id: plt_cache
         env:
           OTP_VERSION: ${{ steps.beam.outputs.otp-version }}
           ELIXIR_VERSION: ${{ steps.beam.outputs.elixir-version }}
           MIX_LOCK_HASH: ${{ hashFiles('**/mix.lock') }}
         with:
-          path: |
-            deps
-            _build
-          key: ${{ runner.os }}-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
+          path: priv/plts
+          key: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
+          restore-keys: plt-${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-
 
       - name: Install mix dependencies
-        if: steps.restore-cache.outputs.cache-hit != 'true'
         run: mix deps.get
 
       - name: Compile dependencies
-        if: steps.restore-cache.outputs.cache-hit != 'true'
         run: mix deps.compile
 
       - name: Compile
         run: mix compile --warnings-as-errors --force
+
+      - name: Create PLTs
+        if: steps.plt_cache.outputs.cache-hit != 'true'
+        run: mix dialyzer --plt
+
+      - name: Save PLT cache
+        id: plt_cache_save
+        uses: actions/cache/save@v3
+        if: steps.plt_cache.outputs.cache-hit != 'true'
+        with:
+          key: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
+          path: priv/plts
+
+      - name: Run dialyzer
+        run: mix dialyzer --format github --format dialyxir
 
       - name: Check and Test
         run: mix ci
