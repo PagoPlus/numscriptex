@@ -14,9 +14,6 @@ defmodule Numscriptex.MixProject do
         "coveralls.html": :test,
         coveralls: :test,
         ci: :test
-      ],
-      dialyzer: [
-        plt_local_path: "priv/plts/project.plt"
       ]
     ]
   end
