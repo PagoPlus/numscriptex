@@ -28,18 +28,22 @@ jobs:
       - name: Restore the deps and _build cache
         uses: actions/cache@v4
         id: cache
+        env:
+          OTP_VERSION: ${{ steps.beam.outputs.otp-version }}
+          ELIXIR_VERSION: ${{ steps.beam.outputs.elixir-version }}
+          MIX_LOCK_HASH: ${{ hashFiles('**/mix.lock') }}
         with:
           path: |
             deps
             _build
-          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+          key: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
 
       - name: Restore plts cache
         uses: actions/cache/restore@v4
-        id: cache
+        id: plt_cache
         with:
           path: priv/plts
-          key: plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+          key: plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ env.MIX_ENV }}-mixlockhash-${{ hashFiles('**/mix.lock') }}
 
       - name: Install mix dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -53,16 +57,16 @@ jobs:
         run: mix compile --warnings-as-errors --force
 
       - name: Create PLTs
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.plt_cache.outputs.cache-hit != 'true'
         run: mix dialyzer --plt
 
       - name: Save PLT cache
         id: plt_cache_save
         uses: actions/cache/save@v4
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.plt_cache.outputs.cache-hit != 'true'
         with:
+          key: plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ env.MIX_ENV }}-mixlockhash-${{ hashFiles('**/mix.lock') }}
           path: priv/plts
-          key: plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
 
       - name: Run dialyzer
         run: mix dialyzer --format github --format dialyxir
