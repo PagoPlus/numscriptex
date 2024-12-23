@@ -16,7 +16,7 @@ defmodule Numscriptex.MixProject do
         ci: :test
       ],
       dialyzer: [
-        plt_file: {:no_warn, "priv/plts/project.plt"}
+        plt_local_path: "priv/plts/project.plt"
       ]
     ]
   end

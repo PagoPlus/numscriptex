@@ -26,5 +26,4 @@ numscriptex-*.tar
 /tmp/
 
 # Ignore PLT files from dialyzer.
-/priv/plts/*.plt
-/priv/plts/*.plt.hash
+/priv/plts/
