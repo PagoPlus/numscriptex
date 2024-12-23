@@ -39,7 +39,7 @@ jobs:
           key: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
 
       - name: Restore plts cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache@v4
         id: plt_cache
         with:
           path: priv/plts
