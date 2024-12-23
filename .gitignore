@@ -24,3 +24,7 @@ numscriptex-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Ignore PLT files from dialyzer.
+/priv/plts/*.plt
+/priv/plts/*.plt.hash

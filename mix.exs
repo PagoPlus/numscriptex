@@ -14,6 +14,9 @@ defmodule Numscriptex.MixProject do
         "coveralls.html": :test,
         coveralls: :test,
         ci: :test
+      ],
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/project.plt"}
       ]
     ]
   end
@@ -30,7 +33,8 @@ defmodule Numscriptex.MixProject do
     [
       {:wasmex, "~> 0.9.2"},
       {:excoveralls, "~> 0.18", only: :test},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
 
