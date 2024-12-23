@@ -15,9 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MIX_ENV: test
-      OTP_VERSION: ${{ steps.beam.outputs.otp-version }}
-      ELIXIR_VERSION: ${{ steps.beam.outputs.elixir-version }}
-      MIX_LOCK_HASH: ${{ hashFiles('**/mix.lock') }}
 
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +28,10 @@ jobs:
       - name: Restore the deps and _build cache
         uses: actions/cache/restore@v3
         id: cache
+        env:
+          OTP_VERSION: ${{ steps.beam.outputs.otp-version }}
+          ELIXIR_VERSION: ${{ steps.beam.outputs.elixir-version }}
+          MIX_LOCK_HASH: ${{ hashFiles('**/mix.lock') }}
         with:
           path: |
             priv/plts
@@ -59,7 +60,7 @@ jobs:
         uses: actions/cache/save@v3
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          key: plt-${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
+          key: plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
           path: priv/plts
 
       - name: Run dialyzer
