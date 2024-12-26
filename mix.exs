@@ -1,14 +1,19 @@
 defmodule Numscriptex.MixProject do
   use Mix.Project
 
+  @source_url "https://github.com/PagoPlus/numscriptex"
+  @version "0.1.0"
+
   def project do
     [
       app: :numscriptex,
-      version: "0.1.0",
-      elixir: "~> 1.17",
+      version: @version,
+      elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      package: package(),
+      docs: docs(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         "coveralls.html": :test,
@@ -30,6 +35,7 @@ defmodule Numscriptex.MixProject do
     [
       {:wasmex, "~> 0.9.2"},
       {:excoveralls, "~> 0.18", only: :test},
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
@@ -44,5 +50,23 @@ defmodule Numscriptex.MixProject do
         "test"
       ]
     ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      name: "NumscriptEx",
+      suorce_ref: "v#{@version}",
+      source_url: @source_url,
+      extras: ["README.md"]
+    ]
+  end
+
+  defp package do
+    %{
+      # licenses: TODO
+      links: %{"GitHub" => @source_url},
+      maintaners: ["Vinicius Costa", "Fernando Mumbach"]
+    }
   end
 end
