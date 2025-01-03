@@ -33,8 +33,6 @@ defmodule Numscriptex.CompilationSettings do
 
       download_path = unquote(@download_path)
 
-      IO.puts("AAAA")
-
       request_opts = [
         ssl: [
           cacerts: :public_key.cacerts_get(),
