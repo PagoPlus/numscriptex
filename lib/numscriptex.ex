@@ -9,7 +9,11 @@ defmodule Numscriptex do
 
   alias Numscriptex.Balances
   alias Numscriptex.CheckLog
+  alias Numscriptex.CompilationSettings
   alias Numscriptex.Utilities
+
+  require CompilationSettings
+  require Logger
 
   @type check_log() :: CheckLog.t()
 
@@ -51,12 +55,14 @@ defmodule Numscriptex do
           |> Path.join("numscript.wasm")
           |> File.read!()
 
+  CompilationSettings.ensure_wasm_file_exists()
+
   @doc """
   To use `check/1` you just need to pass your numscript as its argument.
   Ex:
 
   ```elixir
-  iex> script = "send [USD/2 100] ( source = @foo destination = @bar)"
+  iex> script = "send [USD/2 100] ( soue = @foo destination = @bar)"
   iex> Numscriptex.check(script)
   {:ok, %{script: script}}
   ```
