@@ -62,7 +62,7 @@ defmodule Numscriptex do
   Ex:
 
   ```elixir
-  iex> script = "send [USD/2 100] ( soue = @foo destination = @bar)"
+  iex> script = "send [USD/2 100] ( source = @foo destination = @bar)"
   iex> Numscriptex.check(script)
   {:ok, %{script: script}}
   ```
