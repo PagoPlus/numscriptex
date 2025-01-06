@@ -1,13 +1,15 @@
 defmodule Numscriptex.CompilationSettings do
+  @moduledoc false
+
   @file_version Application.compile_env(:numscriptex, :file_version, "0.23.4")
   @url "https://github.com/yarnpkg/yarn/releases/download/v#{@file_version}/yarn-v#{@file_version}.tar.gz"
   @download_path System.tmp_dir()
-             |> Path.join("yarn-v#{@file_version}.tar.gz")
-             |> String.to_charlist()
+                 |> Path.join("yarn-v#{@file_version}.tar.gz")
+                 |> String.to_charlist()
 
   defmacro ensure_wasm_file_exists do
     quote do
-      file_path = 
+      file_path =
         :numscriptex
         |> :code.priv_dir()
         |> Path.join("dist")
@@ -20,7 +22,12 @@ defmodule Numscriptex.CompilationSettings do
         Logger.info("numscript-wasm.tar.gz downloaded")
 
         Logger.info("Extracting numscript-wasm.tar.gz")
-        :erl_tar.extract(unquote(@download_path), [{:cwd, "priv"}, :compressed])
+
+        :erl_tar.extract(unquote(@download_path), [
+          {:cwd, :code.priv_dir(:numscriptex)},
+          :compressed
+        ])
+
         Logger.info("File successfully extracted on priv directory.")
       end
     end
@@ -28,22 +35,10 @@ defmodule Numscriptex.CompilationSettings do
 
   defp download_wasm_file do
     quote do
-      :inets.start()
-      :ssl.start()
-
       download_path = unquote(@download_path)
 
-      request_opts = [
-        ssl: [
-          cacerts: :public_key.cacerts_get(),
-          customize_hostname_check: [
-            match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
-          ]
-        ]
-      ]
-
       {:ok, :saved_to_file} =
-        :httpc.request(:get, {unquote(@url), []}, request_opts, [stream: download_path])
+        :httpc.request(:get, {unquote(@url), []}, [], stream: download_path)
     end
   end
 end
