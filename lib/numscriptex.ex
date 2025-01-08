@@ -51,6 +51,29 @@ defmodule Numscriptex do
           |> Path.join("numscript.wasm")
           |> File.read!()
 
+  @spec version() :: {:ok, %{numscriptex: binary(), numscript_wasm: binary()}}
+
+  @doc """
+  `version/0` simply shows a map with both Numscript-WASM and NumscriptEx versions.
+
+  Ex:
+
+  ```elixir
+  iex> Numscriptex.version()
+  {:ok, %{numscriptex: "0.1.0", numscript_wasm: "dev"}}
+  ```
+  """
+  def version do
+    numscriptex_version =
+      :numscriptex
+      |> Application.spec(:vsn)
+      |> to_string()
+
+    {:ok, numscript_wasm_version} = process(:version)
+
+    {:ok, Map.put(numscript_wasm_version, :numscriptex, numscriptex_version)}
+  end
+
   @doc """
   To use `check/1` you just need to pass your numscript as its argument.
   Ex:
@@ -135,6 +158,8 @@ defmodule Numscriptex do
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
     do: error
 
+  defp process(input \\ "", operation)
+
   defp process(input, operation) do
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
     {:ok, stdin_pipe} = Wasmex.Pipe.new()
@@ -163,8 +188,8 @@ defmodule Numscriptex do
 
         stdout_pipe
         |> Wasmex.Pipe.read()
-        |> JSON.decode()
-        |> handle_process()
+        |> maybe_decode_json(operation)
+        |> handle_operation_result(operation)
         |> maybe_put_stderr(error)
         |> handle_errors()
 
@@ -178,7 +203,7 @@ defmodule Numscriptex do
         stdout = Wasmex.Pipe.read(stdout_pipe)
 
         {:error, stdout}
-        |> handle_process()
+        |> handle_operation_result(operation)
         |> maybe_put_stderr(error)
         |> handle_errors()
     end
@@ -195,7 +220,17 @@ defmodule Numscriptex do
 
   defp maybe_put_stderr(data, _stderr), do: data
 
-  defp handle_process({:ok, %{"valid" => valid?} = result}) when is_boolean(valid?) and valid? do
+  defp maybe_decode_json(result, :version), do: result
+  defp maybe_decode_json(result, _operation), do: JSON.decode(result)
+
+  defp handle_operation_result(result, operation)
+
+  defp handle_operation_result(result, :version) when is_binary(result) do
+    {:ok, %{numscript_wasm: String.trim(result)}}
+  end
+
+  defp handle_operation_result({:ok, %{"valid" => valid?} = result}, :check)
+       when is_boolean(valid?) and valid? do
     normalized_result = Map.delete(result, "valid")
 
     has_details? = not Enum.empty?(normalized_result)
@@ -203,19 +238,20 @@ defmodule Numscriptex do
     if has_details?, do: {:ok, normalized_result}, else: :ok
   end
 
-  defp handle_process({:ok, %{"valid" => valid?, "errors" => _err} = result})
+  defp handle_operation_result({:ok, %{"valid" => valid?, "errors" => _err} = result}, :check)
        when is_boolean(valid?) and not valid? do
     {:error, %{reason: Map.delete(result, "valid")}}
   end
 
-  defp handle_process({:ok, %{"postings" => postings} = result}) do
+  defp handle_operation_result({:ok, %{"postings" => postings} = result}, :run) do
     if Enum.empty?(postings),
       do: {:error, %{reason: :invalid_input}},
       else: {:ok, result}
   end
 
-  defp handle_process({:error, reason}), do: {:error, %{reason: reason}}
-  defp handle_process({:ok, _data} = result), do: result
+  defp handle_operation_result({:error, reason}, _operation), do: {:error, %{reason: reason}}
+  defp handle_operation_result({:ok, _data} = result, _operation), do: result
+  defp handle_operation_result(result, _operation), do: result
 
   defp handle_errors({:ok, _} = result), do: result
 

@@ -754,7 +754,7 @@ defmodule NumscriptexTest do
 
       assert {:error, error} = Numscriptex.run(script, struct)
 
-      assert error.reason ==
+      assert error.details ==
                "Not enough funds. Needed [USD/2 100] (only [USD/2 99] available)"
     end
 
@@ -782,7 +782,7 @@ defmodule NumscriptexTest do
       struct = build_run_struct(balances, metadata, variables)
 
       assert {:error, error} = Numscriptex.run(script, struct)
-      assert error.reason == "Variable is missing in json: user"
+      assert error.details == "Variable is missing in json: user"
     end
 
     test "fails with invalid script" do
@@ -797,7 +797,7 @@ defmodule NumscriptexTest do
     test "fails with invalid script but valid sctruct" do
       assert {:error, error} = Numscriptex.run(%{script: ""}, %Numscriptex.Run{})
 
-      assert error.reason ==
+      assert error.details ==
                "json: cannot unmarshal object into Go struct field RunInputOpts.script of type string"
     end
 
@@ -814,5 +814,19 @@ defmodule NumscriptexTest do
     |> Numscriptex.Run.put!(:balances, balances)
     |> Numscriptex.Run.put!(:metadata, metadata)
     |> Numscriptex.Run.put!(:variables, variables)
+  end
+
+  describe "version/0" do
+    test "shows both the Numscript-WASM and NumscriptEx versions" do
+      numscriptex_version =
+        :numscriptex
+        |> Application.spec(:vsn)
+        |> to_string()
+
+      assert {:ok, versions} = Numscriptex.version()
+
+      assert versions.numscript_wasm == "dev"
+      assert versions.numscriptex == numscriptex_version
+    end
   end
 end
