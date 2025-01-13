@@ -51,8 +51,6 @@ defmodule Numscriptex do
           |> Path.join("numscript.wasm")
           |> File.read!()
 
-  @spec version() :: {:ok, %{numscriptex: binary(), numscript_wasm: binary()}}
-
   @doc """
   `version/0` simply shows a map with both Numscript-WASM and NumscriptEx versions.
 
@@ -63,6 +61,7 @@ defmodule Numscriptex do
   {:ok, %{numscriptex: "0.1.0", numscript_wasm: "dev"}}
   ```
   """
+  @spec version() :: {:ok, %{numscriptex: binary(), numscript_wasm: binary()}}
   def version do
     numscriptex_version =
       :numscriptex
