@@ -55,7 +55,7 @@ defmodule Numscriptex do
           |> Path.join("numscript.wasm")
           |> File.read!()
 
-  CompilationSettings.download_and_extract_wasm_file()
+  CompilationSettings.download_and_extract_wasm_file(true)
 
   @doc """
   To use `check/1` you just need to pass your numscript as its argument.

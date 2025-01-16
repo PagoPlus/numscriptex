@@ -2,7 +2,6 @@ defmodule Numscriptex.CompilationSettings do
   @moduledoc false
 
   @file_version Application.compile_env(:numscriptex, :file_version, "0.23.4")
-  @ensure_wasm_file_exists? Application.compile_env(:numscriptex, :ensure_wasm_file_exists?, true)
   # @url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@file_version}/numscript-wasm_v#{@file_version}_Wasip1_wasm.tar.gz"
   @url "https://github.com/yarnpkg/yarn/releases/download/v#{@file_version}/yarn-v#{@file_version}.tar.gz"
   @download_path System.tmp_dir()
