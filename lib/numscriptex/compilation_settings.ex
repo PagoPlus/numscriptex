@@ -2,22 +2,21 @@ defmodule Numscriptex.CompilationSettings do
   @moduledoc false
 
   @file_version Application.compile_env(:numscriptex, :file_version, "0.23.4")
-  # @url "https://github.com/PagoPlus/numscriptex/releases/download/v#{@file_version}/numscript-wasm_v#{@file_version}_Wasip1_wasm.tar.gz"
+  @ensure_wasm_file_exists? Application.compile_env(:numscriptex, :ensure_wasm_file_exists?, true)
+  # @url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@file_version}/numscript-wasm_v#{@file_version}_Wasip1_wasm.tar.gz"
   @url "https://github.com/yarnpkg/yarn/releases/download/v#{@file_version}/yarn-v#{@file_version}.tar.gz"
   @download_path System.tmp_dir()
                  # |> Path.join("numscript-wasm_v#{@file_version}_Wasip1_wasm.tar.gz")
                  |> Path.join("yarn-v#{@file_version}.tar.gz")
                  |> String.to_charlist()
 
-  defmacro ensure_wasm_file_exists do
-    quote do: unquote(download_and_extract_wasm_file())
-  end
-
-  defp download_and_extract_wasm_file() do
+  defmacro download_and_extract_wasm_file do
     quote do
-      download_result = unquote(download_wasm_file())
-      
-      with :ok <- download_result, do: unquote(extract_wasm_file())
+      if unquote(@ensure_wasm_file_exists?) do
+        download_result = unquote(download_wasm_file())
+
+        with :ok <- download_result, do: unquote(extract_wasm_file())
+      end
     end
   end
 
@@ -30,6 +29,7 @@ defmodule Numscriptex.CompilationSettings do
           Logger.info("numscript-wasm.tar.gz downloaded")
 
           :ok
+
         {:ok, {{_, status_code, detail}, _, _}} when status_code not in 200..299 ->
           Logger.error("Download request failed with status code #{status_code} #{detail}.")
 
@@ -43,14 +43,15 @@ defmodule Numscriptex.CompilationSettings do
     end
   end
 
-  defp extract_wasm_file() do
+  defp extract_wasm_file do
     quote do
       Logger.info("Extracting numscript-wasm.tar.gz")
 
-      extraction_result = :erl_tar.extract(unquote(@download_path), [
-        {:cwd, :code.priv_dir(:numscriptex)},
-        :compressed
-      ])
+      extraction_result =
+        :erl_tar.extract(unquote(@download_path), [
+          {:cwd, :code.priv_dir(:numscriptex)},
+          :compressed
+        ])
 
       case extraction_result do
         :ok ->
