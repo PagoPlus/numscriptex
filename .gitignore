@@ -26,4 +26,4 @@ numscriptex-*.tar
 /tmp/
 
 # Numscript-WASM binary file
-priv/numscript.wasm
+/priv/numscript.wasm
