@@ -9,10 +9,9 @@ defmodule Numscriptex do
 
   alias Numscriptex.Balances
   alias Numscriptex.CheckLog
-  alias Numscriptex.CompilationSettings
   alias Numscriptex.Utilities
 
-  require CompilationSettings
+  require Numscriptex.CompilationSettings
   require Logger
 
   @type check_log() :: CheckLog.t()
@@ -55,7 +54,7 @@ defmodule Numscriptex do
           |> Path.join("numscript.wasm")
           |> File.read!()
 
-  CompilationSettings.download_and_extract_wasm_file(true)
+  Numscriptex.CompilationSettings.ensure_wasm_binary_is_installed_and_valid()
 
   @doc """
   To use `check/1` you just need to pass your numscript as its argument.
@@ -87,12 +86,12 @@ defmodule Numscriptex do
   To use `run/2` your first argument must be your script, and the second must
   be a `%Numscriptex.Run{}` (go to Numscriptex.Run module to see more) struct.
   Ex:
-   
+
   ```elixir
   iex> script = "send [USD/2 100] ( source = @foo destination = @bar)"
   ...> balances = %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}}
-  ...> 
-  ...> struct = 
+  ...>
+  ...> struct =
   ...> Numscriptex.Run.new()
   ...> |> Numscriptex.Run.put!(:balances, balances)
   ...> |> Numscriptex.Run.put!(:metadata, %{})

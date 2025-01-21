@@ -1,31 +1,69 @@
 defmodule Numscriptex.CompilationSettings do
   @moduledoc false
 
-  @file_version Application.compile_env(:numscriptex, :file_version, "0.23.4")
-  # @url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@file_version}/numscript-wasm_v#{@file_version}_Wasip1_wasm.tar.gz"
-  @url "https://github.com/yarnpkg/yarn/releases/download/v#{@file_version}/yarn-v#{@file_version}.tar.gz"
-  @download_path System.tmp_dir()
-                 # |> Path.join("numscript-wasm_v#{@file_version}_Wasip1_wasm.tar.gz")
-                 |> Path.join("yarn-v#{@file_version}.tar.gz")
-                 |> String.to_charlist()
+  @numscript_checksums_url "https://github.com/PagoPlus/yarn/releases/download/v0.1.0/numscript_checksums.txt"
+  @numscript_wasm_url "https://github.com/PagoPlus/yarn/releases/download/v0.1.0/numscript.wasm"
+  @binary_path :code.priv_dir(:numscriptex)
 
-  defmacro download_and_extract_wasm_file do
+  defmacro ensure_wasm_binary_is_installed_and_valid() do
     quote do
-      if unquote(@ensure_wasm_file_exists?) do
-        download_result = unquote(download_wasm_file())
+      if File.exists?(unquote(@binary_path)) do
+        unquote(compare_binary_hash_with_checksums())
+      else
+        with :ok <- unquote(download_and_validate_wasm_file()) do
+          :ok
+        else
+          {:error, :invalid_checksums} ->
+            unquote(download_and_validate_wasm_file())
 
-        with :ok <- download_result, do: unquote(extract_wasm_file())
+          error ->
+            error
+        end
+      end
+    end
+  end
+
+  defp download_and_validate_wasm_file() do
+    quote do
+      with :ok <- unquote(download_wasm_file()),
+           :ok <- unquote(compare_binary_hash_with_checksums()) do
+        :ok
+      end
+    end
+  end
+
+  defp compare_binary_hash_with_checksums do
+    quote do
+      with {:ok, cheksums} <- unquote(remote_checksums()),
+           {:ok, hash} <- unquote(local_checksums()) do
+        if checksums == hash do
+          Logger.info("numscript-wasm binary validated with checksums successfully.")
+
+          :ok
+        else
+          Logger.error("Based on the checksums, the numscript-wasm binary is not valid.")
+
+          {:error, :invalid_checksums}
+        end
       end
     end
   end
 
   defp download_wasm_file do
     quote do
-      Logger.info("Downloading numscript-wasm.tar.gz")
+      Logger.info("Downloading numscript-wasm binary.")
 
-      case :httpc.request(:get, {unquote(@url), []}, [], stream: unquote(@download_path)) do
+      request =
+        :httpc.request(
+          :get,
+          {unquote(@numscript_wasm_url), []},
+          [],
+          stream: unquote(@binary_path)
+        )
+
+      case request do
         {:ok, :saved_to_file} ->
-          Logger.info("numscript-wasm.tar.gz downloaded")
+          Logger.info("numscript-wasm binary downloaded.")
 
           :ok
 
@@ -35,36 +73,53 @@ defmodule Numscriptex.CompilationSettings do
           :error
 
         {:error, reason} ->
-          Logger.error("Failed to download numscript-wasm. Reason: #{reason}.")
+          Logger.error("Failed to download numscript-wasm binary. Reason: #{reason}.")
 
           :error
       end
     end
   end
 
-  defp extract_wasm_file do
+  defp remote_checksums() do
     quote do
-      Logger.info("Extracting numscript-wasm.tar.gz")
+      Logger.info("Getting remote checksums.")
 
-      extraction_result =
-        :erl_tar.extract(unquote(@download_path), [
-          {:cwd, :code.priv_dir(:numscriptex)},
-          :compressed
-        ])
+      case :httpc.request(:get, {unquote(@numscript_checksums_url), []}, [], []) do
+        {:ok, {{_, status_code, detail}, _, _}} when status_code not in 200..299 ->
+          Logger.error("Download request failed with status code #{status_code} #{detail}.")
 
-      case extraction_result do
-        :ok ->
-          Logger.info("File successfully extracted on priv directory.")
+          :error
 
-          :ok
+        {:ok, {{_protocol, _status_code, _status_message}, _header, body}} ->
+          Logger.info("numscript-wasm checsums downloaded.")
+          [checksums, _file_name] = String.split(body)
 
-        {:ok, _} ->
-          Logger.info("File successfully extracted on priv directory.")
-
-          :ok
+          {:ok, checksums}
 
         {:error, reason} ->
-          Logger.error("Failed to extract the tar.gz file. Reason: #{inspect(reason)}.")
+          Logger.error("Failed to download numscript-wasm binary. Reason: #{reason}.")
+
+          :error
+      end
+    end
+  end
+
+  defp local_checksums() do
+    quote do
+      try do
+        hash =
+          File.stream!("tmp/numscript.wasm", 2048)
+          |> Enum.reduce(:crypto.hash_init(:sha256), fn line, acc ->
+            :crypto.hash_update(acc, line)
+          end)
+          |> :crypto.hash_final()
+          |> Base.encode16()
+          |> String.downcase()
+
+        {:ok, hash}
+      rescue
+        File.Error ->
+          Logger.error("Could not stream numscript binary: no such file or directory.")
 
           :error
       end
