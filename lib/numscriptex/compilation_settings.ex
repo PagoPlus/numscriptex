@@ -34,7 +34,7 @@ defmodule Numscriptex.CompilationSettings do
 
   defp compare_binary_hash_with_checksums do
     quote do
-      with {:ok, cheksums} <- unquote(remote_checksums()),
+      with {:ok, checksums} <- unquote(remote_checksums()),
            {:ok, hash} <- unquote(local_checksums()) do
         if checksums == hash do
           Logger.info("numscript-wasm binary validated with checksums successfully.")
