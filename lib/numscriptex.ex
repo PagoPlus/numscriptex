@@ -68,9 +68,9 @@ defmodule Numscriptex do
       |> Application.spec(:vsn)
       |> to_string()
 
-    {:ok, numscript_wasm_version} = process(:version)
-
-    {:ok, Map.put(numscript_wasm_version, :numscriptex, numscriptex_version)}
+    with {:ok, numscript_wasm_version} <- process(:version) do
+      {:ok, Map.put(numscript_wasm_version, :numscriptex, numscriptex_version)}
+    end
   end
 
   @doc """
@@ -103,12 +103,12 @@ defmodule Numscriptex do
   To use `run/2` your first argument must be your script, and the second must
   be a `%Numscriptex.Run{}` (go to Numscriptex.Run module to see more) struct.
   Ex:
-   
+
   ```elixir
   iex> script = "send [USD/2 100] ( source = @foo destination = @bar)"
   ...> balances = %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}}
-  ...> 
-  ...> struct = 
+  ...>
+  ...> struct =
   ...> Numscriptex.Run.new()
   ...> |> Numscriptex.Run.put!(:balances, balances)
   ...> |> Numscriptex.Run.put!(:metadata, %{})
