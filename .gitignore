@@ -24,3 +24,6 @@ numscriptex-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Numscript-WASM binary file
+priv/numscript.wasm
