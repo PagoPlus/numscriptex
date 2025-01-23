@@ -1,5 +1,8 @@
 defmodule Numscriptex.CompilationSettings do
-  @moduledoc false
+  @moduledoc """
+  `Numscriptex.CompilationSettings` is responsible for ensuring that the Numscriptex
+  library have all that it needs to run correctly at compile time.
+  """
 
   @numscript_checksums_url "https://github.com/PagoPlus/yarn/releases/download/v0.1.0/numscript_checksums.txt"
   @numscript_wasm_url "https://github.com/PagoPlus/yarn/releases/download/v0.1.0/numscript.wasm"
