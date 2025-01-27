@@ -13,6 +13,8 @@ defmodule Numscriptex.CompilationSettings do
                |> to_charlist()
 
   defmacro ensure_wasm_binary_is_installed_and_valid do
+    File.mkdir_p(:code.priv_dir(:numscriptex))
+
     quote do
       if File.exists?(unquote(@binary_path)) do
         Logger.info("Numscript-WASM binary already exists, validating with checksums.")
@@ -58,13 +60,6 @@ defmodule Numscriptex.CompilationSettings do
 
   defp download_wasm_file do
     quote do
-      mkdir = File.mkdir_p(:code.priv_dir(:numscriptex))
-      priv = File.ls(:code.priv_dir(:numscriptex))
-      Logger.info("Downloading Numscript-WASM binary.")
-      Logger.info("Stream path: #{@binary_path}.")
-      Logger.info("Priv dir: #{inspect(priv)}.")
-      Logger.info("File.mkdir_p: #{inspect(mkdir)}.")
-
       request =
         :httpc.request(
           :get,
