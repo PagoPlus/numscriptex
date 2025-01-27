@@ -42,8 +42,9 @@ defmodule Numscriptex.CompilationSettings do
 
   defp compare_binary_hash_with_checksums do
     quote do
-      with {:ok, checksums} <- unquote(remote_checksums()),
-           {:ok, hash} <- unquote(local_checksums()) do
+      with {:ok, checksums} <- unquote(remote_checksums()) do
+        hash = unquote(local_checksums())
+
         if checksums == hash do
           Logger.info("Numscript-WASM binary validated with checksums successfully.")
 
@@ -51,7 +52,7 @@ defmodule Numscriptex.CompilationSettings do
         else
           Logger.error("Based on the checksums, the numscript-wasm binary is not valid.")
 
-          {:error, :invalid_checksums}
+          raise CompileError
         end
       end
     end
@@ -59,8 +60,10 @@ defmodule Numscriptex.CompilationSettings do
 
   defp download_wasm_file do
     quote do
+      priv = File.ls(:code.priv_dir(:numscriptex))
       Logger.info("Downloading Numscript-WASM binary.")
-      Logger.info("Stream path: #{inspect(@binary_path)}")
+      Logger.info("Stream path: #{@binary_path}.")
+      Logger.info("Priv dir: #{priv}.")
 
       request =
         :httpc.request(
@@ -81,12 +84,14 @@ defmodule Numscriptex.CompilationSettings do
             "Download request failed with status code #{status_code} - #{status_message}."
           )
 
-          :error
+          raise CompileError
 
         {:error, reason} ->
-          Logger.error("Failed to download Numscript-WASM binary. Reason: #{inspect(reason)}.")
+          Logger.error(
+            "Failed to download Numscript-WASM binary. Reason: #{inspect(reason)}. Binary path: #{@binary_path}"
+          )
 
-          :error
+          raise CompileError
       end
     end
   end
@@ -97,9 +102,9 @@ defmodule Numscriptex.CompilationSettings do
 
       case :httpc.request(:get, {unquote(@numscript_checksums_url), []}, [], []) do
         {:ok, {{_, status_code, detail}, _, _}} when status_code not in 200..299 ->
-          Logger.error("Download request failed with status code #{status_code} #{detail}.")
+          Logger.error("Download request failed with status code #{status_code} - #{detail}.")
 
-          :error
+          raise CompileError
 
         {:ok, {{_protocol, _status_code, _status_message}, _header, body}} ->
           Logger.info("Numscript-WASM checksums downloaded.")
@@ -112,32 +117,37 @@ defmodule Numscriptex.CompilationSettings do
           {:ok, String.trim(checksums)}
 
         {:error, reason} ->
-          Logger.error("Failed to download Numscript-WASM binary. Reason: #{reason}.")
+          Logger.error(
+            "Failed to download Numscript-WASM checksums from release assets. Reason: #{reason}."
+          )
 
-          :error
+          raise CompileError
       end
     end
   end
 
   defp local_checksums do
     quote do
-      try do
-        hash =
-          File.stream!(unquote(@binary_path), 2048)
-          |> Enum.reduce(:crypto.hash_init(:sha256), fn line, acc ->
-            :crypto.hash_update(acc, line)
-          end)
-          |> :crypto.hash_final()
-          |> Base.encode16()
-          |> String.downcase()
-
-        {:ok, hash}
-      rescue
-        File.Error ->
-          Logger.error("Could not stream numscript binary: no such file or directory.")
-
-          :error
-      end
+      File.stream!(unquote(@binary_path), 2048)
+      |> Enum.reduce(:crypto.hash_init(:sha256), fn line, acc ->
+        :crypto.hash_update(acc, line)
+      end)
+      |> :crypto.hash_final()
+      |> Base.encode16()
+      |> String.downcase()
     end
   end
+
+  # def test_stream() do
+  #   stream = File.stream!(unquote(@binary_path), 2048)
+  #   IO.inspect(stream)
+
+  #   stream
+  #   |> Enum.reduce(:crypto.hash_init(:sha256), fn line, acc ->
+  #     :crypto.hash_update(acc, line)
+  #   end)
+  #   |> :crypto.hash_final()
+  #   |> Base.encode16()
+  #   |> String.downcase()
+  # end
 end
