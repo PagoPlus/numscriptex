@@ -73,13 +73,15 @@ defmodule Numscriptex.CompilationSettings do
 
           :ok
 
-        {:ok, {{_, status_code, detail}, _, _}} when status_code not in 200..299 ->
-          Logger.error("Download request failed with status code #{status_code} #{detail}.")
+        {:ok, {{_, status_code, status_message}, _, _}} when status_code not in 200..299 ->
+          Logger.error(
+            "Download request failed with status code #{status_code} - #{status_message}."
+          )
 
           :error
 
         {:error, reason} ->
-          Logger.error("Failed to download Numscript-WASM binary. Reason: #{reason}.")
+          Logger.error("Failed to download Numscript-WASM binary. Reason: #{inspect(reason)}.")
 
           :error
       end
