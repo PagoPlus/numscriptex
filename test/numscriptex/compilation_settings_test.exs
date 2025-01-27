@@ -55,7 +55,7 @@ defmodule Numscriptex.CompilationSettingsTest do
     end
 
     @tag :tmp_dir
-    test "binary exists but is invalid", %{binary_path: binary_path, tmp_dir: tmp_dir} do
+    test "binary exists but is not invalid", %{binary_path: binary_path, tmp_dir: tmp_dir} do
       dest_path = Path.join(tmp_dir, "numscript.wasm")
 
       File.copy!(binary_path, dest_path)

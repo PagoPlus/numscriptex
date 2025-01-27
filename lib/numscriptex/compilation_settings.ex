@@ -52,7 +52,7 @@ defmodule Numscriptex.CompilationSettings do
         else
           Logger.error("Based on the checksums, the numscript-wasm binary is not valid.")
 
-          raise CompileError
+          {:error, :invalid_checksums}
         end
       end
     end
@@ -60,6 +60,8 @@ defmodule Numscriptex.CompilationSettings do
 
   defp download_wasm_file do
     quote do
+      Logger.info("Downloading Numscript-WASM binary.")
+
       request =
         :httpc.request(
           :get,
@@ -83,7 +85,7 @@ defmodule Numscriptex.CompilationSettings do
 
         {:error, reason} ->
           Logger.error(
-            "Failed to download Numscript-WASM binary. Reason: #{inspect(reason)}. Binary path: #{@binary_path}"
+            "Failed to download Numscript-WASM binary. Reason: #{inspect(reason)}. Binary path: #{unquote(@binary_path)}"
           )
 
           raise CompileError
