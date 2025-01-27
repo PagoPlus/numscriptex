@@ -49,10 +49,9 @@ defmodule Numscriptex do
           optional(:details) => any()
         }
 
-  @binary :numscriptex
-          |> :code.priv_dir()
-          |> Path.join("numscript.wasm")
-          |> File.read!()
+  @binary_path :numscriptex
+               |> :code.priv_dir()
+               |> Path.join("numscript.wasm")
 
   Numscriptex.CompilationSettings.ensure_wasm_binary_is_installed_and_valid()
 
@@ -155,7 +154,7 @@ defmodule Numscriptex do
       stderr: stderr_pipe
     }
 
-    {:ok, pid} = Wasmex.start_link(%{bytes: @binary, wasi: wasi})
+    {:ok, pid} = Wasmex.start_link(%{bytes: File.read!(@binary_path), wasi: wasi})
 
     case Wasmex.call_function(pid, :_start, []) do
       {:ok, []} ->
