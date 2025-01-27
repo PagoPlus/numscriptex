@@ -58,12 +58,12 @@ defmodule Numscriptex.CompilationSettings do
 
   defp download_wasm_file do
     quote do
-      File.mkdir_p(:code.priv_dir(:numscriptex))
-
+      mkdir = File.mkdir_p(:code.priv_dir(:numscriptex))
       priv = File.ls(:code.priv_dir(:numscriptex))
       Logger.info("Downloading Numscript-WASM binary.")
       Logger.info("Stream path: #{@binary_path}.")
       Logger.info("Priv dir: #{inspect(priv)}.")
+      Logger.info("File.mkdir_p: #{inspect(mkdir)}.")
 
       request =
         :httpc.request(
