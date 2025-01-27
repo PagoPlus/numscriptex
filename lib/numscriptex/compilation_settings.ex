@@ -14,8 +14,6 @@ defmodule Numscriptex.CompilationSettings do
 
   defmacro ensure_wasm_binary_is_installed_and_valid do
     quote do
-      File.mkdir_p(:code.priv_dir(:numscriptex))
-
       if File.exists?(unquote(@binary_path)) do
         Logger.info("Numscript-WASM binary already exists, validating with checksums.")
 
@@ -60,10 +58,12 @@ defmodule Numscriptex.CompilationSettings do
 
   defp download_wasm_file do
     quote do
+      File.mkdir_p(:code.priv_dir(:numscriptex))
+
       priv = File.ls(:code.priv_dir(:numscriptex))
       Logger.info("Downloading Numscript-WASM binary.")
       Logger.info("Stream path: #{@binary_path}.")
-      Logger.info("Priv dir: #{priv}.")
+      Logger.info("Priv dir: #{inspect(priv)}.")
 
       request =
         :httpc.request(
@@ -137,17 +137,4 @@ defmodule Numscriptex.CompilationSettings do
       |> String.downcase()
     end
   end
-
-  # def test_stream() do
-  #   stream = File.stream!(unquote(@binary_path), 2048)
-  #   IO.inspect(stream)
-
-  #   stream
-  #   |> Enum.reduce(:crypto.hash_init(:sha256), fn line, acc ->
-  #     :crypto.hash_update(acc, line)
-  #   end)
-  #   |> :crypto.hash_final()
-  #   |> Base.encode16()
-  #   |> String.downcase()
-  # end
 end
