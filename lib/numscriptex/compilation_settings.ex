@@ -21,9 +21,12 @@ defmodule Numscriptex.CompilationSettings do
 
         unquote(compare_binary_hash_with_checksums())
       else
-        case unquote(download_and_validate_wasm_file()) do
+        with :ok <- unquote(download_wasm_file()),
+             :ok <- unquote(compare_binary_hash_with_checksums()) do
+          :ok
+        else
           {:error, :invalid_checksums} ->
-            unquote(download_and_validate_wasm_file())
+            unquote(retry_binary_download())
 
           result ->
             result
@@ -32,10 +35,21 @@ defmodule Numscriptex.CompilationSettings do
     end
   end
 
-  defp download_and_validate_wasm_file do
+  defp retry_binary_download do
     quote do
-      with :ok <- unquote(download_wasm_file()) do
-        unquote(compare_binary_hash_with_checksums())
+      Logger.info("Retrying to download the WASM binary.")
+
+      with :ok <- unquote(download_wasm_file()),
+           :ok <- unquote(compare_binary_hash_with_checksums()) do
+        :ok
+      else
+        {:error, :invalid_checksums} ->
+          Logger.error("Retry failed due to invalid checksums.")
+
+          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 50
+
+        result ->
+          result
       end
     end
   end
@@ -81,14 +95,14 @@ defmodule Numscriptex.CompilationSettings do
             "Download request failed with status code #{status_code} - #{status_message}."
           )
 
-          raise CompileError
+          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 89
 
         {:error, reason} ->
           Logger.error(
             "Failed to download Numscript-WASM binary. Reason: #{inspect(reason)}. Binary path: #{unquote(@binary_path)}"
           )
 
-          raise CompileError
+          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 96
       end
     end
   end
@@ -101,7 +115,7 @@ defmodule Numscriptex.CompilationSettings do
         {:ok, {{_, status_code, detail}, _, _}} when status_code not in 200..299 ->
           Logger.error("Download request failed with status code #{status_code} - #{detail}.")
 
-          raise CompileError
+          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 109
 
         {:ok, {{_protocol, _status_code, _status_message}, _header, body}} ->
           Logger.info("Numscript-WASM checksums downloaded.")
@@ -118,7 +132,7 @@ defmodule Numscriptex.CompilationSettings do
             "Failed to download Numscript-WASM checksums from release assets. Reason: #{reason}."
           )
 
-          raise CompileError
+          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 126
       end
     end
   end
