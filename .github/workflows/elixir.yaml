@@ -12,7 +12,10 @@ permissions:
 jobs:
   test:
     name: Test app
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     env:
       MIX_ENV: test
 
