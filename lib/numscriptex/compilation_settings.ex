@@ -46,7 +46,7 @@ defmodule Numscriptex.CompilationSettings do
         {:error, :invalid_checksums} ->
           Logger.error("Retry failed due to invalid checksums.")
 
-          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 50
+          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 49
 
         result ->
           result
@@ -95,14 +95,14 @@ defmodule Numscriptex.CompilationSettings do
             "Download request failed with status code #{status_code} - #{status_message}."
           )
 
-          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 89
+          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 98
 
         {:error, reason} ->
           Logger.error(
             "Failed to download Numscript-WASM binary. Reason: #{inspect(reason)}. Binary path: #{unquote(@binary_path)}"
           )
 
-          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 96
+          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 105
       end
     end
   end
@@ -115,7 +115,7 @@ defmodule Numscriptex.CompilationSettings do
         {:ok, {{_, status_code, detail}, _, _}} when status_code not in 200..299 ->
           Logger.error("Download request failed with status code #{status_code} - #{detail}.")
 
-          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 109
+          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 118
 
         {:ok, {{_protocol, _status_code, _status_message}, _header, body}} ->
           Logger.info("Numscript-WASM checksums downloaded.")
@@ -132,7 +132,7 @@ defmodule Numscriptex.CompilationSettings do
             "Failed to download Numscript-WASM checksums from release assets. Reason: #{reason}."
           )
 
-          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 126
+          raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 135
       end
     end
   end
