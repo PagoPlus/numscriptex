@@ -112,8 +112,10 @@ defmodule Numscriptex.CompilationSettings do
       Logger.info("Getting remote checksums.")
 
       case :httpc.request(:get, {unquote(@numscript_checksums_url), []}, [], []) do
-        {:ok, {{_, status_code, detail}, _, _}} when status_code not in 200..299 ->
-          Logger.error("Download request failed with status code #{status_code} - #{detail}.")
+        {:ok, {{_, status_code, status_message}, _, _}} when status_code not in 200..299 ->
+          Logger.error(
+            "Download request failed with status code #{status_code} - #{status_message}."
+          )
 
           raise CompileError, file: "./lib/numsriptex/compilation_settings.ex", line: 118
 
