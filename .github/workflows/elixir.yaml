@@ -14,7 +14,7 @@ jobs:
     name: Test app
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-2022]
     runs-on: ${{ matrix.os }}
     env:
       MIX_ENV: test
@@ -26,6 +26,7 @@ jobs:
         id: beam
         with:
           version-file: .tool-versions
+          version-type: strict
 
       - name: Restore the deps and _build cache
         uses: actions/cache@v4
