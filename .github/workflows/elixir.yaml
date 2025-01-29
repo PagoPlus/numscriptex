@@ -9,13 +9,13 @@ on:
 permissions:
   contents: read
 
+env:
+  MIX_ENV: test
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    env:
-      MIX_ENV: test
-
     steps:
       - uses: actions/checkout@v4
 
@@ -37,7 +37,7 @@ jobs:
           path: |
             deps
             _build
-          key: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
+          key: ${{ jobs.id }}-${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
 
       - name: Install mix dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -68,5 +68,45 @@ jobs:
     name: Test
     runs-on: ${{ matrix.os }}
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        id: beam
+        with:
+          otp-version: "27.2"
+          elixir-version: "1.18.0"
+          version-type: strict
+
+      - name: Restore the deps and _build cache
+        uses: actions/cache@v4
+        id: cache
+        env:
+          OTP_VERSION: ${{ steps.beam.outputs.otp-version }}
+          ELIXIR_VERSION: ${{ steps.beam.outputs.elixir-version }}
+          MIX_LOCK_HASH: ${{ hashFiles('**/mix.lock') }}
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ jobs.id }}-${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
+
+      - name: Install mix dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: mix deps.get
+
+      - name: Compile dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: mix deps.compile
+
+      - name: Compile
+        run: mix compile --warnings-as-errors --force
+
+      - name: Create PLTs
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: mix dialyzer --plt
+
+      - name: Run dialyzer
+        run: mix dialyzer --format github --format dialyxir
+
       - name: Check and Test
         run: mix ci
