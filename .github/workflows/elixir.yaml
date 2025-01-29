@@ -10,12 +10,9 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Test app
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-2022]
-    runs-on: ${{ matrix.os }}
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
     env:
       MIX_ENV: test
 
@@ -60,5 +57,16 @@ jobs:
       - name: Run dialyzer
         run: mix dialyzer --format github --format dialyxir
 
+      - name: Check formatted
+        run: mix format --check-formatted
+
+  test:
+    needs: lint
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2022]
+    name: Test
+    runs-on: ${{ matrix.os }}
+    steps:
       - name: Check and Test
         run: mix ci
