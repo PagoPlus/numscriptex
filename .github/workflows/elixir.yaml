@@ -9,13 +9,13 @@ on:
 permissions:
   contents: read
 
-env:
-  MIX_ENV: test
-
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
+
     steps:
       - uses: actions/checkout@v4
 
