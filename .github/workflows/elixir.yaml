@@ -26,7 +26,6 @@ jobs:
         id: beam
         with:
           version-file: .tool-versions
-          version-type: strict
 
       - name: Restore the deps and _build cache
         uses: actions/cache@v4

@@ -9,9 +9,10 @@ defmodule Numscriptex do
 
   alias Numscriptex.Balances
   alias Numscriptex.CheckLog
+  alias Numscriptex.CompileTimeInspection
   alias Numscriptex.Utilities
 
-  require Numscriptex.CompilationSettings
+  require CompileTimeInspection
   require Logger
 
   @type check_log() :: CheckLog.t()
@@ -49,11 +50,7 @@ defmodule Numscriptex do
           optional(:details) => any()
         }
 
-  @binary_path :numscriptex
-               |> :code.priv_dir()
-               |> Path.join("numscript.wasm")
-
-  Numscriptex.CompilationSettings.ensure_wasm_binary_is_installed_and_valid()
+  CompileTimeInspection.ensure_wasm_binary_is_valid()
 
   @doc """
   To use `check/1` you just need to pass your numscript as its argument.
@@ -139,6 +136,12 @@ defmodule Numscriptex do
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
     do: error
 
+  defp binary_path do
+    path = CompileTimeInspection.__info__(:attributes)[:binary_path]
+
+    to_string(path)
+  end
+
   defp process(input, operation) do
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
     {:ok, stdin_pipe} = Wasmex.Pipe.new()
@@ -154,25 +157,24 @@ defmodule Numscriptex do
       stderr: stderr_pipe
     }
 
-    {:ok, pid} = Wasmex.start_link(%{bytes: File.read!(@binary_path), wasi: wasi})
+    with {:ok, binary} <- File.read(binary_path()),
+         {:ok, pid} <- Wasmex.start_link(%{bytes: binary, wasi: wasi}),
+         {{:ok, _}, _pid} <- {Wasmex.call_function(pid, :_start, []), pid} do
+      GenServer.stop(pid)
 
-    case Wasmex.call_function(pid, :_start, []) do
-      {:ok, []} ->
-        GenServer.stop(pid)
+      Wasmex.Pipe.seek(stderr_pipe, 0)
+      error = Wasmex.Pipe.read(stderr_pipe)
 
-        Wasmex.Pipe.seek(stderr_pipe, 0)
-        error = Wasmex.Pipe.read(stderr_pipe)
+      Wasmex.Pipe.seek(stdout_pipe, 0)
 
-        Wasmex.Pipe.seek(stdout_pipe, 0)
-
-        stdout_pipe
-        |> Wasmex.Pipe.read()
-        |> JSON.decode()
-        |> handle_process()
-        |> maybe_put_stderr(error)
-        |> handle_errors()
-
-      {:error, _reason} ->
+      stdout_pipe
+      |> Wasmex.Pipe.read()
+      |> JSON.decode()
+      |> handle_process()
+      |> maybe_put_stderr(error)
+      |> handle_errors()
+    else
+      {{:error, _reason}, pid} ->
         GenServer.stop(pid)
 
         Wasmex.Pipe.seek(stderr_pipe, 0)
@@ -185,6 +187,9 @@ defmodule Numscriptex do
         |> handle_process()
         |> maybe_put_stderr(error)
         |> handle_errors()
+
+      error ->
+        error
     end
   end
 
