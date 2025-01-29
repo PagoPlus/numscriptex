@@ -25,7 +25,8 @@ jobs:
       - uses: erlef/setup-beam@v1
         id: beam
         with:
-          version-file: .tool-versions
+          otp-version: "27.2"
+          elixir-version: "1.18.0"
           version-type: strict
 
       - name: Restore the deps and _build cache
