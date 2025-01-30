@@ -1,14 +1,14 @@
-defmodule Numscriptex.CompileTimeInspectionTest do
+defmodule Numscriptex.AssetsManagerTest do
   use ExUnit.Case, async: false
 
-  alias Numscriptex.CompileTimeInspection
+  alias Numscriptex.AssetsManager
 
-  import CompileTimeInspection, only: [hash_wasm_binary: 0]
+  import AssetsManager, only: [hash_wasm_binary: 0]
 
-  require CompileTimeInspection
+  require AssetsManager
   require Logger
 
-  doctest CompileTimeInspection
+  doctest AssetsManager
 
   setup_all do
     binary_path =
@@ -24,7 +24,7 @@ defmodule Numscriptex.CompileTimeInspectionTest do
       assert File.exists?(binary_path)
       assert {:ok, file_stats_before} = File.stat(binary_path)
 
-      CompileTimeInspection.ensure_wasm_binary_is_valid()
+      AssetsManager.ensure_wasm_binary_is_valid()
       assert {:ok, file_stats_after} = File.stat(binary_path)
 
       assert File.exists?(binary_path)
@@ -35,7 +35,7 @@ defmodule Numscriptex.CompileTimeInspectionTest do
       assert File.rm(binary_path) == :ok
       refute File.exists?(binary_path)
 
-      CompileTimeInspection.ensure_wasm_binary_is_valid()
+      AssetsManager.ensure_wasm_binary_is_valid()
 
       assert File.exists?(binary_path)
     end
@@ -54,7 +54,7 @@ defmodule Numscriptex.CompileTimeInspectionTest do
       wrong_checksums = unquote(hash_wasm_binary())
       assert expected_checksums != wrong_checksums
 
-      CompileTimeInspection.ensure_wasm_binary_is_valid()
+      AssetsManager.ensure_wasm_binary_is_valid()
 
       new_checksums = unquote(hash_wasm_binary())
       assert new_checksums == expected_checksums

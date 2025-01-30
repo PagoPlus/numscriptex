@@ -1,21 +1,19 @@
-defmodule Numscriptex.CompileTimeInspection do
+defmodule Numscriptex.AssetsManager do
   @moduledoc """
-  `Numscriptex.CompileTimeInspection` is responsible for ensuring that the Numscriptex
+  `Numscriptex.AssetsManager` is responsible for ensuring that the Numscriptex
   library have all it needs (i.e. a WASM binary file that is used to check and run Numscripts)
   to run correctly at compile time.
   """
   require Logger
 
   @release_version Application.compile_env(:numscriptex, :version, "0.0.2")
-  @retries Application.compile_env(:numscriptex, :retries, 1)
+  @retries Application.compile_env(:numscriptex, :retries, 3)
   @numscript_checksums_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@release_version}/numscript_checksums.txt"
   @numscript_wasm_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@release_version}/numscript.wasm"
   @binary_path :numscriptex
                |> :code.priv_dir()
                |> Path.join("numscript.wasm")
                |> to_charlist()
-
-  Module.register_attribute(__MODULE__, :binary_path, persist: true)
 
   defmacro ensure_wasm_binary_is_valid do
     quote do
@@ -26,6 +24,28 @@ defmodule Numscriptex.CompileTimeInspection do
       else
         unquote(maybe_retry_download(download_and_compare_binary()))
       end
+    end
+  end
+
+  def binary_path, do: @binary_path
+
+  def hash_wasm_binary do
+    # Logic explanation:
+    #   1. Opens the wasm binary as a stream and split it by chunks of 1024 bytes and then iterate
+    #      the chunks with `Enum.reduce/3`;
+    #   2. The reduce takes a `:crypto.hash_init/1` state as it's argument, then update the state
+    #      with each line hash using `:crypto.hash_update/2`;
+    #   2.1. The `:crypto.hash_init/1` is using the sha256 hash algorithm because it's the same as the checksums,
+    #        so if the algorithm on the checksums changed, you'll need to change here too.
+    #   3. Uses `:crypto.hash_final/1` to finalize the streaming hash calculation;
+    #   4. Encode the hash to the hexadecimal base (also the same as the checksums).
+    quote do
+      File.stream!(unquote(@binary_path), 1024)
+      |> Enum.reduce(:crypto.hash_init(:sha256), fn line, acc ->
+        :crypto.hash_update(acc, line)
+      end)
+      |> :crypto.hash_final()
+      |> Base.encode16(case: :lower)
     end
   end
 
@@ -162,37 +182,6 @@ defmodule Numscriptex.CompileTimeInspection do
 
           raise CompileError
       end
-    end
-  end
-
-  def hash_wasm_binary do
-    # Logic explanation:
-    #   1. Opens the wasm binary as a stream and split it by chunks of 1024 bytes and then iterate
-    #      the chunks with `Enum.reduce/3`;
-    #   2. The reduce takes a `:crypto.hash_init/1` state as it's argument, then update the state
-    #      with each line hash using `:crypto.hash_update/2`;
-    #   2.1. The `:crypto.hash_init/1` is using the sha256 hash algorithm because it's the same as the checksums,
-    #        so if the algorithm on the checksums changed, you'll need to change here too.
-    #   3. Uses `:crypto.hash_final/1` to finalize the streaming hash calculation;
-    #   4. Encode the hash to the hexadecimal base (also the same as the checksums).
-    quote do
-      File.stream!(unquote(@binary_path), 1024)
-      |> Enum.reduce(:crypto.hash_init(:sha256), fn line, acc ->
-        :crypto.hash_update(acc, line)
-      end)
-      |> :crypto.hash_final()
-      |> Base.encode16(case: :lower)
-    end
-  end
-
-  def debug do
-    size =
-      quote do
-        File.stat!(unquote(@binary_path))
-      end
-
-    quote do
-      unquote(size).size
     end
   end
 end
