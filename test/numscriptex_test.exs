@@ -1,6 +1,7 @@
 defmodule NumscriptexTest do
   use ExUnit.Case
 
+  alias Numscriptex.AssetsManager
   alias Numscriptex.CheckLog
 
   doctest Numscriptex
@@ -823,10 +824,12 @@ defmodule NumscriptexTest do
         |> Application.spec(:vsn)
         |> to_string()
 
+      [numscript_wasm_version] = AssetsManager.__info__(:attributes)[:numscript_wasm_version]
+
       assert {:ok, versions} = Numscriptex.version()
 
-      assert versions.numscript_wasm == "dev"
-      assert versions.numscriptex == numscriptex_version
+      assert versions.numscript_wasm == "v#{numscript_wasm_version}"
+      assert versions.numscriptex == "v#{numscriptex_version}"
     end
   end
 end

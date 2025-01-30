@@ -13,7 +13,6 @@ defmodule Numscriptex do
   alias Numscriptex.Utilities
 
   require AssetsManager
-  require Logger
 
   @type check_log() :: CheckLog.t()
 
@@ -59,7 +58,7 @@ defmodule Numscriptex do
 
   ```elixir
   iex> Numscriptex.version()
-  {:ok, %{numscriptex: "0.1.0", numscript_wasm: "dev"}}
+  {:ok, %{numscriptex: "v0.1.0", numscript_wasm: "v0.0.2"}}
   ```
   """
   @spec version() :: {:ok, %{numscriptex: binary(), numscript_wasm: binary()}}
@@ -68,8 +67,9 @@ defmodule Numscriptex do
       :numscriptex
       |> Application.spec(:vsn)
       |> to_string()
+      |> then(fn vsn -> "v#{vsn}" end)
 
-    with {:ok, numscript_wasm_version} <- process(:version) do
+    with {:ok, numscript_wasm_version} <- execute_command(:version) do
       {:ok, Map.put(numscript_wasm_version, :numscriptex, numscriptex_version)}
     end
   end
@@ -158,6 +158,8 @@ defmodule Numscriptex do
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
     do: error
 
+  defp execute_command(input \\ "", operation)
+
   defp execute_command(input, operation) do
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
     {:ok, stdin_pipe} = Wasmex.Pipe.new()
@@ -179,11 +181,11 @@ defmodule Numscriptex do
          {:ok, pid} <- Wasmex.start_link(%{bytes: binary, wasi: wasi}),
          {{:ok, _}, _pid} <- {Wasmex.call_function(pid, :_start, []), pid} do
       GenServer.stop(pid, :normal)
-      process(pid, stdout_pipe, stderr_pipe)
+      process(pid, stdout_pipe, stderr_pipe, operation)
     else
       {{:error, _reason}, pid} ->
         GenServer.stop(pid)
-        process(pid, stdout_pipe, stderr_pipe)
+        process(pid, stdout_pipe, stderr_pipe, operation)
 
       {:error, reason} when is_atom(reason) ->
         {:error, %{reason: handle_posix_errors(reason)}}
@@ -193,26 +195,18 @@ defmodule Numscriptex do
     end
   end
 
-  defp process(pid, stdout_pipe, stderr_pipe) when is_pid(pid) do
+  defp process(pid, stdout_pipe, stderr_pipe, operation) when is_pid(pid) do
     Wasmex.Pipe.seek(stdout_pipe, 0)
     stdout = Wasmex.Pipe.read(stdout_pipe)
 
     Wasmex.Pipe.seek(stderr_pipe, 0)
     error = Wasmex.Pipe.read(stderr_pipe)
 
-    case JSON.decode(stdout) do
-      {:ok, _content} = result ->
-        result
-        |> handle_process()
-        |> maybe_put_stderr(error)
-        |> handle_errors()
-
-      {:error, _reason} ->
-        {:error, stdout}
-        |> handle_operation_result(operation)
-        |> maybe_put_stderr(error)
-        |> handle_errors()
-    end
+    stdout
+    |> maybe_decode_json(operation)
+    |> handle_operation_result(operation)
+    |> maybe_put_stderr(error)
+    |> handle_errors()
   end
 
   defp handle_posix_errors(reason) do
