@@ -7,9 +7,13 @@ defmodule Numscriptex do
   Already checked the script and want to execute him? Use the `run/2` function.
   """
 
+  alias Numscriptex.AssetsManager
   alias Numscriptex.Balances
   alias Numscriptex.CheckLog
   alias Numscriptex.Utilities
+
+  require AssetsManager
+  require Logger
 
   @type check_log() :: CheckLog.t()
 
@@ -46,10 +50,7 @@ defmodule Numscriptex do
           optional(:details) => any()
         }
 
-  @binary :numscriptex
-          |> :code.priv_dir()
-          |> Path.join("numscript.wasm")
-          |> File.read!()
+  AssetsManager.ensure_wasm_binary_is_valid()
 
   @doc """
   To use `check/1` you just need to pass your numscript as its argument.
@@ -65,12 +66,12 @@ defmodule Numscriptex do
   """
   @spec check(binary()) :: {:ok, check_result()} | {:error, errors()}
   def check(input) do
-    case process(input, :check) do
-      {:ok, details} ->
-        {:ok, %{script: input, details: normalize_check_logs(details)}}
-
+    case execute_command(input, :check) do
       :ok ->
         {:ok, %{script: input}}
+
+      {:ok, details} ->
+        {:ok, %{script: input, details: normalize_check_logs(details)}}
 
       {:error, %{reason: errors}} ->
         {:error, %{reason: normalize_check_logs(errors)}}
@@ -81,12 +82,12 @@ defmodule Numscriptex do
   To use `run/2` your first argument must be your script, and the second must
   be a `%Numscriptex.Run{}` (go to Numscriptex.Run module to see more) struct.
   Ex:
-   
+
   ```elixir
   iex> script = "send [USD/2 100] ( source = @foo destination = @bar)"
   ...> balances = %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}}
-  ...> 
-  ...> struct = 
+  ...>
+  ...> struct =
   ...> Numscriptex.Run.new()
   ...> |> Numscriptex.Run.put!(:balances, balances)
   ...> |> Numscriptex.Run.put!(:metadata, %{})
@@ -103,7 +104,7 @@ defmodule Numscriptex do
     |> Map.from_struct()
     |> Map.merge(%{script: numscript})
     |> JSON.encode!()
-    |> process(:run)
+    |> execute_command(:run)
     |> maybe_put_final_balance(initial_balance)
     |> standardize_run_result()
   end
@@ -135,7 +136,7 @@ defmodule Numscriptex do
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
     do: error
 
-  defp process(input, operation) do
+  defp execute_command(input, operation) do
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
     {:ok, stdin_pipe} = Wasmex.Pipe.new()
     {:ok, stderr_pipe} = Wasmex.Pipe.new()
@@ -150,37 +151,58 @@ defmodule Numscriptex do
       stderr: stderr_pipe
     }
 
-    {:ok, pid} = Wasmex.start_link(%{bytes: @binary, wasi: wasi})
+    binary_path = AssetsManager.binary_path()
 
-    case Wasmex.call_function(pid, :_start, []) do
-      {:ok, []} ->
+    with {:ok, binary} <- File.read(binary_path),
+         {:ok, pid} <- Wasmex.start_link(%{bytes: binary, wasi: wasi}),
+         {{:ok, _}, _pid} <- {Wasmex.call_function(pid, :_start, []), pid} do
+      GenServer.stop(pid, :normal)
+      process(pid, stdout_pipe, stderr_pipe)
+    else
+      {{:error, _reason}, pid} ->
         GenServer.stop(pid)
+        process(pid, stdout_pipe, stderr_pipe)
 
-        Wasmex.Pipe.seek(stderr_pipe, 0)
-        error = Wasmex.Pipe.read(stderr_pipe)
+      {:error, reason} when is_atom(reason) ->
+        {:error, %{reason: handle_posix_errors(reason)}}
 
-        Wasmex.Pipe.seek(stdout_pipe, 0)
+      {:error, reason} ->
+        {:error, %{reason: reason}}
+    end
+  end
 
-        stdout_pipe
-        |> Wasmex.Pipe.read()
-        |> JSON.decode()
+  defp process(pid, stdout_pipe, stderr_pipe) when is_pid(pid) do
+    Wasmex.Pipe.seek(stdout_pipe, 0)
+    stdout = Wasmex.Pipe.read(stdout_pipe)
+
+    Wasmex.Pipe.seek(stderr_pipe, 0)
+    error = Wasmex.Pipe.read(stderr_pipe)
+
+    case JSON.decode(stdout) do
+      {:ok, _content} = result ->
+        result
         |> handle_process()
         |> maybe_put_stderr(error)
         |> handle_errors()
 
       {:error, _reason} ->
-        GenServer.stop(pid)
-
-        Wasmex.Pipe.seek(stderr_pipe, 0)
-        error = Wasmex.Pipe.read(stderr_pipe)
-
-        Wasmex.Pipe.seek(stdout_pipe, 0)
-        stdout = Wasmex.Pipe.read(stdout_pipe)
-
         {:error, stdout}
         |> handle_process()
         |> maybe_put_stderr(error)
         |> handle_errors()
+    end
+  end
+
+  defp handle_posix_errors(reason) do
+    file_read_error =
+      reason
+      |> :file.format_error()
+      |> to_string()
+
+    if file_read_error =~ "unknown POSIX error" do
+      reason
+    else
+      "Can't read the WASM binary due to: #{file_read_error}"
     end
   end
 
