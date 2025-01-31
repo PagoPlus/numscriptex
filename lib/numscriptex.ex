@@ -7,9 +7,12 @@ defmodule Numscriptex do
   Already checked the script and want to execute him? Use the `run/2` function.
   """
 
+  alias Numscriptex.AssetsManager
   alias Numscriptex.Balances
   alias Numscriptex.CheckLog
   alias Numscriptex.Utilities
+
+  require AssetsManager
 
   @type check_log() :: CheckLog.t()
 
@@ -46,10 +49,34 @@ defmodule Numscriptex do
           optional(:details) => any()
         }
 
-  @binary :numscriptex
-          |> :code.priv_dir()
-          |> Path.join("numscript.wasm")
-          |> File.read!()
+  AssetsManager.ensure_wasm_binary_is_valid()
+
+  @doc """
+  `version/0` simply shows a map with both Numscript-WASM and NumscriptEx versions.
+
+  Ex:
+
+  ```elixir
+  iex> Numscriptex.version()
+  %{numscriptex: "v0.1.0", numscript_wasm: "v0.0.2"}
+  ```
+  """
+  @spec version() :: %{numscriptex: binary(), numscript_wasm: binary()}
+  def version do
+    numscriptex_version =
+      :numscriptex
+      |> Application.spec(:vsn)
+      |> to_string()
+      |> then(fn vsn -> "v#{vsn}" end)
+
+    case execute_command(:version) do
+      {:ok, numscript_wasm_version} ->
+        Map.put(numscript_wasm_version, :numscriptex, numscriptex_version)
+
+      {:error, _reason} ->
+        %{numscript_wasm: "unknown", numscriptex: numscriptex_version}
+    end
+  end
 
   @doc """
   To use `check/1` you just need to pass your numscript as its argument.
@@ -65,12 +92,12 @@ defmodule Numscriptex do
   """
   @spec check(binary()) :: {:ok, check_result()} | {:error, errors()}
   def check(input) do
-    case process(input, :check) do
-      {:ok, details} ->
-        {:ok, %{script: input, details: normalize_check_logs(details)}}
-
+    case execute_command(input, :check) do
       :ok ->
         {:ok, %{script: input}}
+
+      {:ok, details} ->
+        {:ok, %{script: input, details: normalize_check_logs(details)}}
 
       {:error, %{reason: errors}} ->
         {:error, %{reason: normalize_check_logs(errors)}}
@@ -81,12 +108,12 @@ defmodule Numscriptex do
   To use `run/2` your first argument must be your script, and the second must
   be a `%Numscriptex.Run{}` (go to Numscriptex.Run module to see more) struct.
   Ex:
-   
+
   ```elixir
   iex> script = "send [USD/2 100] ( source = @foo destination = @bar)"
   ...> balances = %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}}
-  ...> 
-  ...> struct = 
+  ...>
+  ...> struct =
   ...> Numscriptex.Run.new()
   ...> |> Numscriptex.Run.put!(:balances, balances)
   ...> |> Numscriptex.Run.put!(:metadata, %{})
@@ -103,7 +130,7 @@ defmodule Numscriptex do
     |> Map.from_struct()
     |> Map.merge(%{script: numscript})
     |> JSON.encode!()
-    |> process(:run)
+    |> execute_command(:run)
     |> maybe_put_final_balance(initial_balance)
     |> standardize_run_result()
   end
@@ -135,7 +162,9 @@ defmodule Numscriptex do
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
     do: error
 
-  defp process(input, operation) do
+  defp execute_command(input \\ "", operation)
+
+  defp execute_command(input, operation) do
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
     {:ok, stdin_pipe} = Wasmex.Pipe.new()
     {:ok, stderr_pipe} = Wasmex.Pipe.new()
@@ -150,37 +179,50 @@ defmodule Numscriptex do
       stderr: stderr_pipe
     }
 
-    {:ok, pid} = Wasmex.start_link(%{bytes: @binary, wasi: wasi})
+    binary_path = AssetsManager.binary_path()
 
-    case Wasmex.call_function(pid, :_start, []) do
-      {:ok, []} ->
+    with {:ok, binary} <- File.read(binary_path),
+         {:ok, pid} <- Wasmex.start_link(%{bytes: binary, wasi: wasi}),
+         {{:ok, _}, _pid} <- {Wasmex.call_function(pid, :_start, []), pid} do
+      GenServer.stop(pid, :normal)
+      process(pid, stdout_pipe, stderr_pipe, operation)
+    else
+      {{:error, _reason}, pid} ->
         GenServer.stop(pid)
+        process(pid, stdout_pipe, stderr_pipe, operation)
 
-        Wasmex.Pipe.seek(stderr_pipe, 0)
-        error = Wasmex.Pipe.read(stderr_pipe)
+      {:error, reason} when is_atom(reason) ->
+        {:error, %{reason: handle_posix_errors(reason)}}
 
-        Wasmex.Pipe.seek(stdout_pipe, 0)
+      {:error, reason} ->
+        {:error, %{reason: reason}}
+    end
+  end
 
-        stdout_pipe
-        |> Wasmex.Pipe.read()
-        |> JSON.decode()
-        |> handle_process()
-        |> maybe_put_stderr(error)
-        |> handle_errors()
+  defp process(pid, stdout_pipe, stderr_pipe, operation) when is_pid(pid) do
+    Wasmex.Pipe.seek(stdout_pipe, 0)
+    stdout = Wasmex.Pipe.read(stdout_pipe)
 
-      {:error, _reason} ->
-        GenServer.stop(pid)
+    Wasmex.Pipe.seek(stderr_pipe, 0)
+    error = Wasmex.Pipe.read(stderr_pipe)
 
-        Wasmex.Pipe.seek(stderr_pipe, 0)
-        error = Wasmex.Pipe.read(stderr_pipe)
+    stdout
+    |> maybe_decode_json(operation)
+    |> handle_operation_result(operation)
+    |> maybe_put_stderr(error)
+    |> handle_errors()
+  end
 
-        Wasmex.Pipe.seek(stdout_pipe, 0)
-        stdout = Wasmex.Pipe.read(stdout_pipe)
+  defp handle_posix_errors(reason) do
+    file_read_error =
+      reason
+      |> :file.format_error()
+      |> to_string()
 
-        {:error, stdout}
-        |> handle_process()
-        |> maybe_put_stderr(error)
-        |> handle_errors()
+    if file_read_error =~ "unknown POSIX error" do
+      reason
+    else
+      "Can't read the WASM binary due to: #{file_read_error}"
     end
   end
 
@@ -195,7 +237,17 @@ defmodule Numscriptex do
 
   defp maybe_put_stderr(data, _stderr), do: data
 
-  defp handle_process({:ok, %{"valid" => valid?} = result}) when is_boolean(valid?) and valid? do
+  defp maybe_decode_json(result, :version), do: result
+  defp maybe_decode_json(result, _operation), do: JSON.decode(result)
+
+  defp handle_operation_result(result, operation)
+
+  defp handle_operation_result(result, :version) when is_binary(result) do
+    {:ok, %{numscript_wasm: String.trim(result)}}
+  end
+
+  defp handle_operation_result({:ok, %{"valid" => valid?} = result}, :check)
+       when is_boolean(valid?) and valid? do
     normalized_result = Map.delete(result, "valid")
 
     has_details? = not Enum.empty?(normalized_result)
@@ -203,19 +255,20 @@ defmodule Numscriptex do
     if has_details?, do: {:ok, normalized_result}, else: :ok
   end
 
-  defp handle_process({:ok, %{"valid" => valid?, "errors" => _err} = result})
+  defp handle_operation_result({:ok, %{"valid" => valid?, "errors" => _err} = result}, :check)
        when is_boolean(valid?) and not valid? do
     {:error, %{reason: Map.delete(result, "valid")}}
   end
 
-  defp handle_process({:ok, %{"postings" => postings} = result}) do
+  defp handle_operation_result({:ok, %{"postings" => postings} = result}, :run) do
     if Enum.empty?(postings),
       do: {:error, %{reason: :invalid_input}},
       else: {:ok, result}
   end
 
-  defp handle_process({:error, reason}), do: {:error, %{reason: reason}}
-  defp handle_process({:ok, _data} = result), do: result
+  defp handle_operation_result({:error, reason}, _operation), do: {:error, %{reason: reason}}
+  defp handle_operation_result({:ok, _data} = result, _operation), do: result
+  defp handle_operation_result(result, _operation), do: result
 
   defp handle_errors({:ok, _} = result), do: result
 

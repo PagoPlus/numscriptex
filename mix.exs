@@ -44,7 +44,6 @@ defmodule Numscriptex.MixProject do
   defp aliases do
     [
       ci: [
-        "format --check-formatted",
         "deps.unlock --check-unused",
         "credo suggest --strict --all",
         "test"

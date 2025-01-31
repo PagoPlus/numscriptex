@@ -1,11 +1,12 @@
-# NumscripEx
+# NumscriptEx
+NumscriptEx is a library that allows its users to check and run Numscripts in Elixir. And if you don't know what are
+Numscripts, here a quick explanation:
+
 [Numscript](https://docs.formance.com/numscript/) is a DSL made by [Formance](https://www.formance.com/)
 that simplifies complex financial transactions with scripts that are easy to read,
-so yout don't need a big, complex and error-prone codebase to deal with your finances.
+so you don't need a big, complex and error-prone codebase to deal with your finances.
 
-You can see and execute some examples on the [Numscript Playground](https://playground.numscript.org/?template=simple-send).
-
-`NumscriptEx` is a library that allows its users to check and run said numscripts in Elixir.
+You can see and execute some examples at the [Numscript Playground](https://playground.numscript.org/?template=simple-send).
 
 ## Installation
 You will just need to add `:numscriptex` as a dependency on your `mix.exs`, and run the `mix deps.get` command:
@@ -17,6 +18,21 @@ def deps do
   ]
 end
 ```
+### Configuration
+NumscriptEx needs some external assets ([Numscript-WASM](https://github.com/PagoPlus/numscript-wasm)),
+and you can configure said assets if you want.
+
+Available configurations:
+- `:version`: is the release version to be downloaded;
+- `:retries`: number of download retries in case of failure.
+
+Ex:
+```elixir
+config :numscriptex,
+       version: "0.0.2",
+       retries: 3
+```
+These above are the default values.
 
 ## Usage
 This library basically has two core functions: `Numscriptex.check/1` and `Numscriptex.run/2`.
@@ -30,7 +46,7 @@ But before introducing these two functions, you will need to know what is the `N
 A numscript needs some other data aside the script itself to run correctly, and
 `Numscriptex.Run` solves this problem.
 
-If you want to know what exactly these additional data are, you can see the 
+If you want to know what exactly these additional data are, you can see the
 [numscript playground](https://playground.numscript.org/?template=simple-send) for examples.
 
 The abstraction is made by creating a struct:
@@ -124,7 +140,7 @@ iex> {:ok, %{
 ...>   }
 ...> }
 ```
-`:script` is the only key that will always return if your script is valid, the 
+`:script` is the only key that will always return if your script is valid, the
 other three are optional.
 ### Run
 To use `run/2` your first argument must be your script (the same you used in `check/1`), and the second must be the `%Numscriptex.Run{}` struct. Ex:
@@ -134,7 +150,7 @@ iex>  Numscriptex.run(script, struct)
 {:ok, result}
 ```
 
-Where result will be something like this: 
+Where result will be something like this:
 ```elixir
 iex> %{
 ...>   postings: [
@@ -165,8 +181,8 @@ iex> %{
 ...>             initial_balance: 0
 ...>           }
 ...>         ],
-...>   accountMeta: %{} 
-...>   txMeta: %{} 
+...>   accountMeta: %{}
+...>   txMeta: %{}
 ...> }
 ```
 
