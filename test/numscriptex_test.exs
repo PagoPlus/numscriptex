@@ -1,5 +1,5 @@
 defmodule NumscriptexTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   alias Numscriptex.AssetsManager
   alias Numscriptex.CheckLog
@@ -826,10 +826,31 @@ defmodule NumscriptexTest do
 
       [numscript_wasm_version] = AssetsManager.__info__(:attributes)[:numscript_wasm_version]
 
-      assert {:ok, versions} = Numscriptex.version()
+      versions = Numscriptex.version()
 
       assert versions.numscript_wasm == "v#{numscript_wasm_version}"
       assert versions.numscriptex == "v#{numscriptex_version}"
+    end
+
+    @tag :tmp_dir
+    test "in case of errors numscript-wasm version is returned as 'unknown'", %{tmp_dir: tmp_dir} do
+      wasm_binary_path = AssetsManager.binary_path()
+      dest_path = Path.join(tmp_dir, "numscript.wasm")
+
+      File.copy!(wasm_binary_path, dest_path)
+      File.copy!(wasm_binary_path, wasm_binary_path, 1024)
+
+      numscriptex_version =
+        :numscriptex
+        |> Application.spec(:vsn)
+        |> to_string()
+
+      versions = Numscriptex.version()
+
+      assert versions.numscript_wasm == "unknown"
+      assert versions.numscriptex == "v#{numscriptex_version}"
+
+      File.copy!(dest_path, wasm_binary_path)
     end
   end
 end

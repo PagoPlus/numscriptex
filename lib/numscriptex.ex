@@ -58,10 +58,10 @@ defmodule Numscriptex do
 
   ```elixir
   iex> Numscriptex.version()
-  {:ok, %{numscriptex: "v0.1.0", numscript_wasm: "v0.0.2"}}
+  %{numscriptex: "v0.1.0", numscript_wasm: "v0.0.2"}
   ```
   """
-  @spec version() :: {:ok, %{numscriptex: binary(), numscript_wasm: binary()}}
+  @spec version() :: %{numscriptex: binary(), numscript_wasm: binary()}
   def version do
     numscriptex_version =
       :numscriptex
@@ -69,8 +69,12 @@ defmodule Numscriptex do
       |> to_string()
       |> then(fn vsn -> "v#{vsn}" end)
 
-    with {:ok, numscript_wasm_version} <- execute_command(:version) do
-      {:ok, Map.put(numscript_wasm_version, :numscriptex, numscriptex_version)}
+    case execute_command(:version) do
+      {:ok, numscript_wasm_version} ->
+        Map.put(numscript_wasm_version, :numscriptex, numscriptex_version)
+
+      {:error, _reason} ->
+        %{numscript_wasm: "unknown", numscriptex: numscriptex_version}
     end
   end
 
