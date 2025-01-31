@@ -4,12 +4,12 @@ defmodule Numscriptex.AssetsManager do
   library have all it needs (i.e. a WASM binary file that is used to check and run Numscripts)
   to run correctly at compile time.
   """
-  require Logger
 
-  @release_version Application.compile_env(:numscriptex, :version, "0.0.2")
+  Module.register_attribute(__MODULE__, :numscript_wasm_version, persist: true)
+  @numscript_wasm_version Application.compile_env(:numscriptex, :version, "0.0.2")
   @retries Application.compile_env(:numscriptex, :retries, 3)
-  @numscript_checksums_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@release_version}/numscript_checksums.txt"
-  @numscript_wasm_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@release_version}/numscript.wasm"
+  @numscript_checksums_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@numscript_wasm_version}/numscript_checksums.txt"
+  @numscript_wasm_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@numscript_wasm_version}/numscript.wasm"
   @binary_path :numscriptex
                |> :code.priv_dir()
                |> Path.join("numscript.wasm")
@@ -17,6 +17,8 @@ defmodule Numscriptex.AssetsManager do
 
   defmacro ensure_wasm_binary_is_valid do
     quote do
+      require Logger
+
       File.mkdir_p!(:code.priv_dir(:numscriptex))
 
       if File.exists?(unquote(@binary_path)) do

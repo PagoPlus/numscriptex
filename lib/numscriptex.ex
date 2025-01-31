@@ -13,7 +13,6 @@ defmodule Numscriptex do
   alias Numscriptex.Utilities
 
   require AssetsManager
-  require Logger
 
   @type check_log() :: CheckLog.t()
 
@@ -51,6 +50,33 @@ defmodule Numscriptex do
         }
 
   AssetsManager.ensure_wasm_binary_is_valid()
+
+  @doc """
+  `version/0` simply shows a map with both Numscript-WASM and NumscriptEx versions.
+
+  Ex:
+
+  ```elixir
+  iex> Numscriptex.version()
+  %{numscriptex: "v0.1.0", numscript_wasm: "v0.0.2"}
+  ```
+  """
+  @spec version() :: %{numscriptex: binary(), numscript_wasm: binary()}
+  def version do
+    numscriptex_version =
+      :numscriptex
+      |> Application.spec(:vsn)
+      |> to_string()
+      |> then(fn vsn -> "v#{vsn}" end)
+
+    case execute_command(:version) do
+      {:ok, numscript_wasm_version} ->
+        Map.put(numscript_wasm_version, :numscriptex, numscriptex_version)
+
+      {:error, _reason} ->
+        %{numscript_wasm: "unknown", numscriptex: numscriptex_version}
+    end
+  end
 
   @doc """
   To use `check/1` you just need to pass your numscript as its argument.
@@ -136,6 +162,8 @@ defmodule Numscriptex do
   defp maybe_put_final_balance({:error, _reason} = error, _initial_balance),
     do: error
 
+  defp execute_command(input \\ "", operation)
+
   defp execute_command(input, operation) do
     {:ok, stdout_pipe} = Wasmex.Pipe.new()
     {:ok, stdin_pipe} = Wasmex.Pipe.new()
@@ -157,11 +185,11 @@ defmodule Numscriptex do
          {:ok, pid} <- Wasmex.start_link(%{bytes: binary, wasi: wasi}),
          {{:ok, _}, _pid} <- {Wasmex.call_function(pid, :_start, []), pid} do
       GenServer.stop(pid, :normal)
-      process(pid, stdout_pipe, stderr_pipe)
+      process(pid, stdout_pipe, stderr_pipe, operation)
     else
       {{:error, _reason}, pid} ->
         GenServer.stop(pid)
-        process(pid, stdout_pipe, stderr_pipe)
+        process(pid, stdout_pipe, stderr_pipe, operation)
 
       {:error, reason} when is_atom(reason) ->
         {:error, %{reason: handle_posix_errors(reason)}}
@@ -171,26 +199,18 @@ defmodule Numscriptex do
     end
   end
 
-  defp process(pid, stdout_pipe, stderr_pipe) when is_pid(pid) do
+  defp process(pid, stdout_pipe, stderr_pipe, operation) when is_pid(pid) do
     Wasmex.Pipe.seek(stdout_pipe, 0)
     stdout = Wasmex.Pipe.read(stdout_pipe)
 
     Wasmex.Pipe.seek(stderr_pipe, 0)
     error = Wasmex.Pipe.read(stderr_pipe)
 
-    case JSON.decode(stdout) do
-      {:ok, _content} = result ->
-        result
-        |> handle_process()
-        |> maybe_put_stderr(error)
-        |> handle_errors()
-
-      {:error, _reason} ->
-        {:error, stdout}
-        |> handle_process()
-        |> maybe_put_stderr(error)
-        |> handle_errors()
-    end
+    stdout
+    |> maybe_decode_json(operation)
+    |> handle_operation_result(operation)
+    |> maybe_put_stderr(error)
+    |> handle_errors()
   end
 
   defp handle_posix_errors(reason) do
@@ -217,7 +237,17 @@ defmodule Numscriptex do
 
   defp maybe_put_stderr(data, _stderr), do: data
 
-  defp handle_process({:ok, %{"valid" => valid?} = result}) when is_boolean(valid?) and valid? do
+  defp maybe_decode_json(result, :version), do: result
+  defp maybe_decode_json(result, _operation), do: JSON.decode(result)
+
+  defp handle_operation_result(result, operation)
+
+  defp handle_operation_result(result, :version) when is_binary(result) do
+    {:ok, %{numscript_wasm: String.trim(result)}}
+  end
+
+  defp handle_operation_result({:ok, %{"valid" => valid?} = result}, :check)
+       when is_boolean(valid?) and valid? do
     normalized_result = Map.delete(result, "valid")
 
     has_details? = not Enum.empty?(normalized_result)
@@ -225,19 +255,20 @@ defmodule Numscriptex do
     if has_details?, do: {:ok, normalized_result}, else: :ok
   end
 
-  defp handle_process({:ok, %{"valid" => valid?, "errors" => _err} = result})
+  defp handle_operation_result({:ok, %{"valid" => valid?, "errors" => _err} = result}, :check)
        when is_boolean(valid?) and not valid? do
     {:error, %{reason: Map.delete(result, "valid")}}
   end
 
-  defp handle_process({:ok, %{"postings" => postings} = result}) do
+  defp handle_operation_result({:ok, %{"postings" => postings} = result}, :run) do
     if Enum.empty?(postings),
       do: {:error, %{reason: :invalid_input}},
       else: {:ok, result}
   end
 
-  defp handle_process({:error, reason}), do: {:error, %{reason: reason}}
-  defp handle_process({:ok, _data} = result), do: result
+  defp handle_operation_result({:error, reason}, _operation), do: {:error, %{reason: reason}}
+  defp handle_operation_result({:ok, _data} = result, _operation), do: result
+  defp handle_operation_result(result, _operation), do: result
 
   defp handle_errors({:ok, _} = result), do: result
 
