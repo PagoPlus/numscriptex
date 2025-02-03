@@ -185,4 +185,6 @@ iex> %{
 ```
 
 ## License
-TODO
+Copyright (c) 2025 MedFlow
+
+This library is MIT licensed. See the [LICENSE](https://github.com/PagoPlus/numscriptex/blob/main/README.md) for details.
