@@ -63,7 +63,7 @@ defmodule Numscriptex.MixProject do
 
   defp package do
     %{
-      # licenses: TODO
+      licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintaners: ["Vinicius Costa", "Fernando Mumbach"]
     }

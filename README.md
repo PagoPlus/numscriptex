@@ -20,11 +20,11 @@ end
 ```
 ### Configuration
 NumscriptEx needs some external assets ([Numscript-WASM](https://github.com/PagoPlus/numscript-wasm)),
-and you can configure said assets if you want.
+and you can override the default version.
 
 Available configurations:
-- `:version` - is the release version to be downloaded;
-- `:retries` - number of download retries in case of failure.
+- `:version` the binary release version to use (see [numscript-wasm releases](https://github.com/PagoPlus/numscript-wasm/releases/)).
+- `:retries` number of times to retry the download in case of a network failure.
 
 Ex:
 ```elixir
@@ -58,12 +58,9 @@ iex>  %Numscriptex.Run{
 ...>  }
 ```
 Where:
-- `:balances` - is a map with the account's assets balances;
-- `:metadata` - metada variables;
-- `:variables` - variables used inside the script.
-
-You can read more about the metadata field clicking [here](https://docs.formance.com/numscript/reference/metadata)
-and more about the variables field clicking [here](https://docs.formance.com/numscript/reference/variables)
+- `:balances` a map with the account's assets balances.
+- `:metadata` [metada variables](https://docs.formance.com/numscript/reference/metadata);
+- `:variables` [variables](https://docs.formance.com/numscript/reference/variables) used inside the script.
 
 And to create a new struct, you can use the `Numscriptex.Run.put/3` or `Numscriptex.Run.put!/3` functions. Ex:
 ```elixir

@@ -15,10 +15,10 @@ defmodule Numscriptex.CheckLog do
   Type that represents `Numscriptex.CheckLog` struct.
 
   ## Fields
-  * `:character` - the character where the log occur;\n
-  * `:level` - the log level;
-  * `:line` - the line where the log occur;
-  * `:message` - the log message;
+  * `:character` the character where the log occur;\n
+  * `:level` the log level;
+  * `:line` the line where the log occur;
+  * `:message` the log message;
   """
   @type t() :: %__MODULE__{
           character: pos_integer(),
