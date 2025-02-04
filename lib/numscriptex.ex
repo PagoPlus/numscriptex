@@ -1,6 +1,6 @@
 defmodule Numscriptex do
   @moduledoc """
-  NumscriptEx is a library that allows its users to check and run [numscripts](https://docs.formance.com/numscript/)
+  NumscriptEx is a library that allows its users to check and run [Numscripts](https://docs.formance.com/numscript/)
   via Elixir.
 
   Want to check if your script is valid and ready to go? Use the `check/1` function.
@@ -13,6 +13,8 @@ defmodule Numscriptex do
   alias Numscriptex.Utilities
 
   require AssetsManager
+
+  AssetsManager.ensure_wasm_binary_is_valid()
 
   @type check_log() :: CheckLog.t()
 
@@ -49,12 +51,8 @@ defmodule Numscriptex do
           optional(:details) => any()
         }
 
-  AssetsManager.ensure_wasm_binary_is_valid()
-
   @doc """
-  `version/0` simply shows a map with both Numscript-WASM and NumscriptEx versions.
-
-  Ex:
+  `version/0` simply shows a map with both [Numscript-WASM](https://github.com/PagoPlus/numscript-wasm) and NumscriptEx versions. Ex:
 
   ```elixir
   iex> Numscriptex.version()
@@ -83,7 +81,7 @@ defmodule Numscriptex do
   Ex:
 
   ```elixir
-  iex> script = "send [USD/2 100] ( source = @foo destination = @bar)"
+  iex> script = "send [USD/2 100] (source = @foo destination = @bar)"
   iex> Numscriptex.check(script)
   {:ok, %{script: script}}
   ```
@@ -106,11 +104,11 @@ defmodule Numscriptex do
 
   @doc """
   To use `run/2` your first argument must be your script, and the second must
-  be a `%Numscriptex.Run{}` (go to Numscriptex.Run module to see more) struct.
+  be a `%Numscriptex.Run{}` (go to `Numscriptex.Run` module to see more) struct.
   Ex:
 
   ```elixir
-  iex> script = "send [USD/2 100] ( source = @foo destination = @bar)"
+  iex> script = "send [USD/2 100] (source = @foo destination = @bar)"
   ...> balances = %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}}
   ...>
   ...> struct =

@@ -1,6 +1,6 @@
 # NumscriptEx
-NumscriptEx is a library that allows its users to check and run Numscripts in Elixir. And if you don't know what are
-Numscripts, here a quick explanation:
+NumscriptEx is a library that allows its users to check and run Numscripts in Elixir. If this is your first time hearing about
+Numscripts, here is a quick explanation:
 
 [Numscript](https://docs.formance.com/numscript/) is a DSL made by [Formance](https://www.formance.com/)
 that simplifies complex financial transactions with scripts that are easy to read,
@@ -20,11 +20,11 @@ end
 ```
 ### Configuration
 NumscriptEx needs some external assets ([Numscript-WASM](https://github.com/PagoPlus/numscript-wasm)),
-and you can configure said assets if you want.
+and you can override the default version.
 
 Available configurations:
-- `:version`: is the release version to be downloaded;
-- `:retries`: number of download retries in case of failure.
+- `:version` the binary release version to use (see [numscript-wasm releases](https://github.com/PagoPlus/numscript-wasm/releases/)).
+- `:retries` number of times to retry the download in case of a network failure.
 
 Ex:
 ```elixir
@@ -47,7 +47,7 @@ A numscript needs some other data aside the script itself to run correctly, and
 `Numscriptex.Run` solves this problem.
 
 If you want to know what exactly these additional data are, you can see the
-[numscript playground](https://playground.numscript.org/?template=simple-send) for examples.
+[Numscript Playground](https://playground.numscript.org/?template=simple-send) for examples.
 
 The abstraction is made by creating a struct:
 ```elixir
@@ -58,27 +58,23 @@ iex>  %Numscriptex.Run{
 ...>  }
 ```
 Where:
-- `balances`: are a map with the account's assets balances;
-- `metadata`: metada variables;
-- `variables`: variables used inside the script.
+- `:balances` a map with the account's assets balances.
+- `:metadata` [metada variables](https://docs.formance.com/numscript/reference/metadata);
+- `:variables` [variables](https://docs.formance.com/numscript/reference/variables) used inside the script.
 
-You can read more about Metadata clicking [here](https://docs.formance.com/numscript/reference/metadata)
-and more about Variables clicking [here](https://docs.formance.com/numscript/reference/variables)
-
-And to create a new struct, you can use the `put/3` or `put!/3` functions. Ex:
+And to create a new struct, you can use the `Numscriptex.Run.put/3` or `Numscriptex.Run.put!/3` functions. Ex:
 ```elixir
 iex>  variables = %{"order" => "orders:2345"}
 ...>  balances = %{"orders:2345" => %{"USD/2" => 1000}}
-...>
 ...>  metadata = %{
 ...>    "merchants:1234" => %{"commission" => "15%"},
 ...>    "orders:2345" => %{"merchant" => "merchants:1234"}
 ...>  }
 ...>
 ...>  Numscriptex.Run.new()
-...>    |> Numscriptex.Run.put!(:balances, balances)
-...>	|> Numscriptex.Run.put!(:metadata, metadata)
-...>	|> Numscriptex.Run.put!(:variables, variables)
+...>  |> Numscriptex.Run.put!(:balances, balances)
+...>  |> Numscriptex.Run.put!(:metadata, metadata)
+...>  |> Numscriptex.Run.put!(:variables, variables)
 ```
 
 Will return:
@@ -97,7 +93,7 @@ iex> %Numscriptex.Run{
 Kindly reminder: you will always need a valid `Numscriptex.Run` struct to successfully execute your scripts.
 
 ### Check
-To use `check/1` you just have to pass your numscript as it's argument. Ex:
+To use `Numscriptex.check/1` you just have to pass your numscript as it's argument. Ex:
 
 ```elixir
 iex>  "tmp/script.num"
@@ -140,10 +136,9 @@ iex> {:ok, %{
 ...>   }
 ...> }
 ```
-`:script` is the only key that will always return if your script is valid, the
-other three are optional.
+The `:script` is the only field that will always return if your script is valid, the other three are optional.
 ### Run
-To use `run/2` your first argument must be your script (the same you used in `check/1`), and the second must be the `%Numscriptex.Run{}` struct. Ex:
+To use `Numscriptex.run/2` your first argument must be your script (the same you used in `Numscriptex.check/1`), and the second must be the `%Numscriptex.Run{}` struct. Ex:
 
 ```elixir
 iex>  Numscriptex.run(script, struct)
@@ -187,4 +182,6 @@ iex> %{
 ```
 
 ## License
-TODO
+Copyright (c) 2025 MedFlow
+
+This library is MIT licensed. See the [LICENSE](https://github.com/PagoPlus/numscriptex/blob/main/README.md) for details.

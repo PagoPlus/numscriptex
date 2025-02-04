@@ -64,7 +64,7 @@ defmodule Numscriptex.RunTest do
       ]
 
       assert {:error, :invalid_value, error} = Run.put(%Run{}, :balances, balances)
-      assert error.details == "Values argument must be a map."
+      assert error.details == "Argument `value` must be a map."
     end
 
     test "put metadata field with valid params" do
@@ -92,7 +92,7 @@ defmodule Numscriptex.RunTest do
       ]
 
       assert {:error, :invalid_value, error} = Run.put(%Run{}, :metadata, metadata)
-      assert error.details == "Values argument must be a map."
+      assert error.details == "Argument `value` must be a map."
     end
 
     test "put variables field with valid params" do
@@ -122,7 +122,7 @@ defmodule Numscriptex.RunTest do
       ]
 
       assert {:error, :invalid_value, error} = Run.put(%Run{}, :variables, variables)
-      assert error.details == "Values argument must be a map."
+      assert error.details == "Argument `value` must be a map."
     end
 
     test "fails to put an invalid field" do
@@ -156,7 +156,7 @@ defmodule Numscriptex.RunTest do
     end
 
     test "raise an error with invalid value" do
-      error_message = "Values argument must be a map."
+      error_message = "Argument `value` must be a map."
 
       assert_raise ArgumentError, error_message, fn -> Run.put!(%Run{}, :metadata, "") end
     end

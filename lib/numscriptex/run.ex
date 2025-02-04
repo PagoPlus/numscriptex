@@ -1,11 +1,8 @@
 defmodule Numscriptex.Run do
   @moduledoc """
-  A [numscript](https://docs.formance.com/numscript/) needs some other data aside from
-  the script itself to run correctly, and `Numscriptex.Run` solves this problem.
-
-  If you want to know what exactly these additional fields are, you can learn more on 
-  [numscript playground](https://playground.numscript.org/?template=simple-send)
-  and the [numscript docs](https://docs.formance.com/numscript/).
+  A Numscript needs some other data aside from the script itself to run correctly,
+  and `Numscriptex.Run` solves this problem. If you want to know what exactly these
+  additional fields are, you can learn more on [Numscript Playground](https://playground.numscript.org/?template=simple-send) and the [Numscript Docs](https://docs.formance.com/numscript/).
   """
 
   @derive JSON.Encoder
@@ -25,9 +22,10 @@ defmodule Numscriptex.Run do
   @typedoc """
   Type that represents `Numscriptex.Run` struct.
 
-  `:balances`: the account's assets balances.
-  `:metadata`: metadata variables.
-  `:variables`: variables used inside the script.
+  ## Fields
+  * `:balances` a map with account's assets balances
+  * `:metadata` [metada variables](https://docs.formance.com/numscript/reference/metadata)
+  * `:variables` [variables](https://docs.formance.com/numscript/reference/variables) used inside the script
   """
   @type t() :: %__MODULE__{
           variables: map(),
@@ -51,7 +49,7 @@ defmodule Numscriptex.Run do
   def new, do: %__MODULE__{}
 
   @doc """
-  Puts the chosen value under the field key on the `Numscriptex.Run` struct as 
+  Puts the chosen value under the field key on the `Numscriptex.Run` struct as
   long both are valid.
 
   ```elixir
@@ -59,7 +57,7 @@ defmodule Numscriptex.Run do
   ...> balances =  %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}}
   ...>
   ...> Numscriptex.Run.put(struct, :balances, balances)
-  {:ok, 
+  {:ok,
     %Numscriptex.Run{
       balances: %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}},
       variables: %{},
@@ -84,7 +82,7 @@ defmodule Numscriptex.Run do
     do: {:error, :invalid_field, %{details: "The field '#{field}' does not exists."}}
 
   def put(_run_struct, _field, value) when not is_map(value),
-    do: {:error, :invalid_value, %{details: "Values argument must be a map."}}
+    do: {:error, :invalid_value, %{details: "Argument `value` must be a map."}}
 
   def put(%__MODULE__{} = run_struct, :balances, value) do
     {:ok, Map.replace(run_struct, :balances, Utilities.normalize_keys(value, :string))}
@@ -102,7 +100,7 @@ defmodule Numscriptex.Run do
   ...> balances =  [%{"foo" => %{"USD/2" => 500, "EUR/2" => 300}}]
   ...>
   ...> Numscriptex.Run.put!(struct, :balances, balances)
-  ** (ArgumentError) Values argument must be a map.
+  ** (ArgumentError) Argument `value` must be a map.
   ```
   """
   @spec put!(t(), atom(), map()) :: t() | no_return()
