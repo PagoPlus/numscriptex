@@ -23,9 +23,9 @@ defmodule Numscriptex.Run do
   Type that represents `Numscriptex.Run` struct.
 
   ## Fields
-  * `:balances` a map with account's assets balances.
-  * `:metadata` [metada variables](https://docs.formance.com/numscript/reference/metadata).
-  * `:variables` [variables](https://docs.formance.com/numscript/reference/variables) used inside the script.
+  * `:balances` a map with account's assets balances
+  * `:metadata` [metada variables](https://docs.formance.com/numscript/reference/metadata)
+  * `:variables` [variables](https://docs.formance.com/numscript/reference/variables) used inside the script
   """
   @type t() :: %__MODULE__{
           variables: map(),

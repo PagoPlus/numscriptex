@@ -1,6 +1,6 @@
 # NumscriptEx
 NumscriptEx is a library that allows its users to check and run Numscripts in Elixir. If this is your first time hearing about
-Numscripts, here a quick explanation:
+Numscripts, here is a quick explanation:
 
 [Numscript](https://docs.formance.com/numscript/) is a DSL made by [Formance](https://www.formance.com/)
 that simplifies complex financial transactions with scripts that are easy to read,
@@ -72,9 +72,9 @@ iex>  variables = %{"order" => "orders:2345"}
 ...>  }
 ...>
 ...>  Numscriptex.Run.new()
-...>    |> Numscriptex.Run.put!(:balances, balances)
-...>	  |> Numscriptex.Run.put!(:metadata, metadata)
-...>	  |> Numscriptex.Run.put!(:variables, variables)
+...>  |> Numscriptex.Run.put!(:balances, balances)
+...>	|> Numscriptex.Run.put!(:metadata, metadata)
+...>	|> Numscriptex.Run.put!(:variables, variables)
 ```
 
 Will return:
