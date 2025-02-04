@@ -56,7 +56,7 @@ defmodule Numscriptex do
 
   ```elixir
   iex> Numscriptex.version()
-  %{numscriptex: "v0.2.0", numscript_wasm: "v0.0.2"}
+  %{numscriptex: "v0.2.1", numscript_wasm: "v0.0.2"}
   ```
   """
   @spec version() :: %{numscriptex: binary(), numscript_wasm: binary()}
