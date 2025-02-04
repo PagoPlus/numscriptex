@@ -2,7 +2,7 @@ defmodule Numscriptex.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/PagoPlus/numscriptex"
-  @version "0.2.0"
+  @version "0.2.1"
 
   def project do
     [
@@ -64,7 +64,6 @@ defmodule Numscriptex.MixProject do
 
   defp package do
     %{
-      organization: "loggin",
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintaners: ["Vinicius Costa", "Fernando Mumbach"]
