@@ -10,6 +10,7 @@ defmodule Numscriptex.MixProject do
       version: @version,
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
+      description: "Numscript support for Elixir",
       aliases: aliases(),
       deps: deps(),
       package: package(),
