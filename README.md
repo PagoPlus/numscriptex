@@ -14,7 +14,7 @@ You will just need to add `:numscriptex` as a dependency on your `mix.exs`, and 
 ```elixir
 def deps do
   [
-    {:numscriptex, "~> 0.1.0"}
+    {:numscriptex, "~> 0.2.0"}
   ]
 end
 ```
