@@ -818,14 +818,19 @@ defmodule NumscriptexTest do
   end
 
   describe "version/0" do
-    test "shows both the Numscript-WASM and NumscriptEx versions" do
+    setup do
       numscriptex_version =
         :numscriptex
         |> Application.spec(:vsn)
         |> to_string()
 
-      [numscript_wasm_version] = AssetsManager.__info__(:attributes)[:numscript_wasm_version]
+      %{numscriptex_version: numscriptex_version}
+    end
 
+    test "shows both the Numscript-WASM and NumscriptEx versions", %{
+      numscriptex_version: numscriptex_version
+    } do
+      [numscript_wasm_version] = AssetsManager.__info__(:attributes)[:numscript_wasm_version]
       versions = Numscriptex.version()
 
       assert versions.numscript_wasm == "v#{numscript_wasm_version}"
@@ -833,17 +838,15 @@ defmodule NumscriptexTest do
     end
 
     @tag :tmp_dir
-    test "in case of errors numscript-wasm version is returned as 'unknown'", %{tmp_dir: tmp_dir} do
+    test "in case of errors numscript-wasm version is returned as 'unknown'", %{
+      tmp_dir: tmp_dir,
+      numscriptex_version: numscriptex_version
+    } do
       wasm_binary_path = AssetsManager.binary_path()
       dest_path = Path.join(tmp_dir, "numscript.wasm")
 
       File.copy!(wasm_binary_path, dest_path)
       File.copy!(wasm_binary_path, wasm_binary_path, 1024)
-
-      numscriptex_version =
-        :numscriptex
-        |> Application.spec(:vsn)
-        |> to_string()
 
       versions = Numscriptex.version()
 
