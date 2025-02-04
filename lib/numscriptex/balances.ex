@@ -1,13 +1,13 @@
 defmodule Numscriptex.Balances do
   @moduledoc """
   `Numscriptex.Balances` is responsible for building the account's final balance
-  after running your [numscript](https://docs.formance.com/numscript/), so you
+  after running your [Numscript](https://docs.formance.com/numscript/), so you
   can see the results of all transactions.
   """
 
   @doc """
-  Receives the account assets (balance field from `%Numscriptex.Run{}`), and the 
-  postings that are generated after running the numscript transaction. 
+  Receives the account assets (balance field from `%Numscriptex.Run{}`), and the
+  postings that are generated after running the numscript transaction.
 
   The result will be a map contaning the initial and final balances of each
   account assets. Ex:
@@ -28,7 +28,7 @@ defmodule Numscriptex.Balances do
   ...>     "source" => "foo"
   ...>   }
   ...> ]
-  ...>  
+  ...>
   ...> Numscriptex.Balances.put(account_assets, postings)
   [
     %{
@@ -144,7 +144,7 @@ defmodule Numscriptex.Balances do
     end
   end
 
-  def maybe_drop_balance(balances) do
+  defp maybe_drop_balance(balances) do
     Enum.reject(balances, fn balance ->
       balance["initial_balance"] == 0 and
         balance["final_balance"] == 0

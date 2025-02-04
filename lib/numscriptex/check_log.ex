@@ -11,12 +11,23 @@ defmodule Numscriptex.CheckLog do
             line: nil,
             message: nil
 
+  @typedoc """
+  Type that represents `Numscriptex.CheckLog` struct.
+
+  ## Fields
+  * `:character` the character position where the log occurred
+  * `:level` the log level
+  * `:line` the line where the log occur
+  * `:message` the log message
+  """
   @type t() :: %__MODULE__{
-          character: integer(),
-          level: atom(),
-          line: integer(),
+          character: pos_integer(),
+          level: log_levels(),
+          line: pos_integer(),
           message: binary()
         }
+
+  @type log_levels() :: :error | :warning | :hint | :info
 
   @doc """
   Get a map with log data about a checked numscript.
