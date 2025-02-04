@@ -73,8 +73,8 @@ iex>  variables = %{"order" => "orders:2345"}
 ...>
 ...>  Numscriptex.Run.new()
 ...>  |> Numscriptex.Run.put!(:balances, balances)
-...>	|> Numscriptex.Run.put!(:metadata, metadata)
-...>	|> Numscriptex.Run.put!(:variables, variables)
+...>  |> Numscriptex.Run.put!(:metadata, metadata)
+...>  |> Numscriptex.Run.put!(:variables, variables)
 ```
 
 Will return:
