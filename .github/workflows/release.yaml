@@ -1,0 +1,41 @@
+name: Hex Release
+
+on:
+  release:
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        id: beam
+        with:
+          version-file: .tool-versions
+          version-type: strict
+
+      - name: Restore the deps and _build cache
+        uses: actions/cache@v4
+        id: cache
+        env:
+          MIX_ENV: prod
+          OTP_VERSION: ${{ steps.beam.outputs.otp-version }}
+          ELIXIR_VERSION: ${{ steps.beam.outputs.elixir-version }}
+          MIX_LOCK_HASH: ${{ hashFiles('**/mix.lock') }}
+        with:
+          path: |
+            deps
+            _build
+          key: publish-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ env.MIX_ENV }}-mixlockhash-${{ env.MIX_LOCK_HASH }}
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: mix deps.get
+
+      - name: Run Hex Publish
+        run: mix hex.publish --yes
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
