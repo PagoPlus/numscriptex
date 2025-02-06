@@ -129,10 +129,13 @@ defmodule Numscriptex.Balances do
 
   defp calculate_final_balance(balance, posting, initial_balance) do
     same_asset? = posting["asset"] == balance["asset"]
-    source? = posting["source"] === balance["account"]
-    destination? = posting["destination"] === balance["account"]
+    source? = posting["source"] == balance["account"]
+    destination? = posting["destination"] == balance["account"]
 
     cond do
+      source? and destination? and same_asset? ->
+        initial_balance
+
       source? and same_asset? ->
         initial_balance - posting["amount"]
 
