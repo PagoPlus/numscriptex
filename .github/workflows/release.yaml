@@ -2,6 +2,7 @@ name: Hex Release
 
 on:
   release:
+    types: [published]
 
 jobs:
   publish:
