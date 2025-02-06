@@ -739,6 +739,117 @@ defmodule NumscriptexTest do
              ]
     end
 
+    test "transactions to itself" do
+      balances = %{"user" => %{"USD/2" => 1000}}
+      struct = build_run_struct(balances, %{}, %{})
+
+      script = """
+      send [USD/2 1000] (
+        source = @user
+        destination = @user
+      )
+      """
+
+      assert {:ok, result} = Numscriptex.run(script, struct)
+
+      assert result.postings == [
+               %{
+                 amount: 1000,
+                 asset: "USD/2",
+                 destination: "user",
+                 source: "user"
+               }
+             ]
+
+      assert result.balances == [
+               %{
+                 account: "user",
+                 asset: "USD/2",
+                 final_balance: 1000,
+                 initial_balance: 1000
+               }
+             ]
+    end
+
+    test "transactions to itself and another destination" do
+      balances = %{"user" => %{"USD/2" => 1000}, "user2" => %{"USD/2" => 1000}}
+      struct = build_run_struct(balances, %{}, %{})
+
+      script = """
+      send [USD/2 1000] (
+        source = @user
+        destination = {
+          62% to @user
+          27% to @user2
+          remaining to @user3
+        }
+      )
+      """
+
+      assert {:ok, result} = Numscriptex.run(script, struct)
+
+      assert result.postings == [
+               %{
+                 amount: 620,
+                 asset: "USD/2",
+                 destination: "user",
+                 source: "user"
+               },
+               %{
+                 amount: 270,
+                 asset: "USD/2",
+                 destination: "user2",
+                 source: "user"
+               },
+               %{
+                 source: "user",
+                 destination: "user3",
+                 amount: 110,
+                 asset: "USD/2"
+               }
+             ]
+
+      assert result.balances == [
+               %{
+                 account: "user",
+                 asset: "USD/2",
+                 final_balance: 620,
+                 initial_balance: 1000
+               },
+               %{
+                 account: "user2",
+                 asset: "USD/2",
+                 final_balance: 1270,
+                 initial_balance: 1000
+               },
+               %{
+                 account: "user3",
+                 asset: "USD/2",
+                 final_balance: 110,
+                 initial_balance: 0
+               }
+             ]
+    end
+
+    test "save a minimum amount from source" do
+      balances = %{"user" => %{"USD/2" => 1000}}
+      struct = build_run_struct(balances, %{}, %{})
+
+      script = """
+      // Now that we are saving $5 from the total amount of $10,
+      // the user will only have $5 to spend, thus failing the transaction
+      // given that the user will need $5,01.
+      save [USD/2 500] from @user
+      send [USD/2 501] (
+        source = @user
+        destination = @dest
+      )
+      """
+
+      assert {:error, error} = Numscriptex.run(script, struct)
+      assert error.details == "Not enough funds. Needed [USD/2 501] (only [USD/2 500] available)"
+    end
+
     test "with insufficient amount" do
       script = """
       send [USD/2 100] (
