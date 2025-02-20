@@ -1,9 +1,31 @@
-defmodule Numscriptex.Balances do
+defmodule Numscriptex.Balance do
   @moduledoc """
   `Numscriptex.Balances` is responsible for building the account's final balance
   after running your [Numscript](https://docs.formance.com/numscript/), so you
   can see the results of all transactions.
   """
+
+  @derive JSON.Encoder
+  defstruct account: nil,
+            asset: nil,
+            final_balance: nil,
+            initial_balance: nil
+
+  @typedoc """
+  Type that represents `Numscriptex.CheckLog` struct.
+
+  ## Fields
+  * `:account` the account name
+  * `:asset` the asset were the transaction was made
+  * `:final_balance` balance after the transactions
+  * `:initial_balance` balance before the transactions
+  """
+  @type t() :: %__MODULE__{
+          account: bitstring(),
+          asset: bitstring(),
+          final_balance: pos_integer(),
+          initial_balance: pos_integer()
+        }
 
   @doc """
   Receives the account assets (balance field from `%Numscriptex.Run{}`), and the
@@ -29,25 +51,25 @@ defmodule Numscriptex.Balances do
   ...>   }
   ...> ]
   ...>
-  ...> Numscriptex.Balances.put(account_assets, postings)
+  ...> Numscriptex.Balance.put(account_assets, postings)
   [
-    %{
-      "account" => "foo",
-      "asset" => "EUR/2",
-      "final_balance" => 300,
-      "initial_balance" => 300
+    %Numscriptex.Balance{
+      account: "foo",
+      asset: "EUR/2",
+      final_balance: 300,
+      initial_balance: 300
     },
-    %{
-      "account" => "foo",
-      "asset" => "USD/2",
-      "final_balance" => 400,
-      "initial_balance" => 500
+    %Numscriptex.Balance{
+      account: "foo",
+      asset: "USD/2",
+      final_balance: 400,
+      initial_balance: 500
     },
-    %{
-      "account" => "bar",
-      "asset" => "USD/2",
-      "final_balance" => 100,
-      "initial_balance" => 0
+    %Numscriptex.Balance{
+      account: "bar",
+      asset: "USD/2",
+      final_balance: 100,
+      initial_balance: 0
     }
   ]
   ```
@@ -60,6 +82,9 @@ defmodule Numscriptex.Balances do
     |> handle_initial_balance(account_assets)
     |> handle_final_balance(postings)
     |> maybe_drop_balance()
+    |> then(fn balances ->
+      Enum.map(balances, &struct(__MODULE__, &1))
+    end)
   end
 
   defp build_balances(account_assets, postings) do
@@ -73,10 +98,10 @@ defmodule Numscriptex.Balances do
     Enum.flat_map(account_assets, fn {account, assets} ->
       Enum.map(assets, fn {asset, _amount} ->
         %{
-          "account" => account,
-          "asset" => asset,
-          "initial_balance" => 0,
-          "final_balance" => 0
+          account: account,
+          asset: asset,
+          initial_balance: 0,
+          final_balance: 0
         }
       end)
     end)
@@ -86,16 +111,16 @@ defmodule Numscriptex.Balances do
     Enum.flat_map(postings, fn posting ->
       [
         %{
-          "account" => posting["source"],
-          "asset" => posting["asset"],
-          "initial_balance" => 0,
-          "final_balance" => 0
+          account: posting["source"],
+          asset: posting["asset"],
+          initial_balance: 0,
+          final_balance: 0
         },
         %{
-          "account" => posting["destination"],
-          "asset" => posting["asset"],
-          "initial_balance" => 0,
-          "final_balance" => 0
+          account: posting["destination"],
+          asset: posting["asset"],
+          initial_balance: 0,
+          final_balance: 0
         }
       ]
     end)
@@ -103,18 +128,18 @@ defmodule Numscriptex.Balances do
 
   defp handle_initial_balance(balances, account_assets) do
     Enum.map(balances, fn balance ->
-      account = balance["account"]
-      asset = balance["asset"]
+      account = balance[:account]
+      asset = balance[:asset]
 
       initial_balance = account_assets[account][asset] || 0
 
-      %{balance | "initial_balance" => initial_balance}
+      %{balance | initial_balance: initial_balance}
     end)
   end
 
   defp handle_final_balance(balances, postings) do
     Enum.map(balances, fn balance ->
-      initial_balance = balance["initial_balance"]
+      initial_balance = balance[:initial_balance]
 
       Enum.reduce(postings, {%{}, initial_balance}, fn posting, {_map, acc} ->
         final_balance = calculate_final_balance(balance, posting, acc)
@@ -123,14 +148,14 @@ defmodule Numscriptex.Balances do
       end)
     end)
     |> Enum.map(fn {balance, final_balance} ->
-      %{balance | "final_balance" => final_balance}
+      %{balance | final_balance: final_balance}
     end)
   end
 
   defp calculate_final_balance(balance, posting, initial_balance) do
-    same_asset? = posting["asset"] == balance["asset"]
-    source? = posting["source"] == balance["account"]
-    destination? = posting["destination"] == balance["account"]
+    same_asset? = posting["asset"] == balance[:asset]
+    source? = posting["source"] == balance[:account]
+    destination? = posting["destination"] == balance[:account]
 
     cond do
       source? and destination? and same_asset? ->
@@ -149,8 +174,8 @@ defmodule Numscriptex.Balances do
 
   defp maybe_drop_balance(balances) do
     Enum.reject(balances, fn balance ->
-      balance["initial_balance"] == 0 and
-        balance["final_balance"] == 0
+      balance[:initial_balance] == 0 and
+        balance[:final_balance] == 0
     end)
   end
 end
