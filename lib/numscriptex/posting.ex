@@ -1,7 +1,6 @@
 defmodule Numscriptex.Posting do
   @moduledoc """
-  `Numscriptex.Postings` is responsible for standardize the financial
-  transactions that were made.
+  `Numscriptex.Postings` represents a financial transaction made with [Numscript](https://docs.formance.com/numscript/)
   """
 
   @derive JSON.Encoder
@@ -11,7 +10,7 @@ defmodule Numscriptex.Posting do
             source: nil
 
   @typedoc """
-  Type that represents `Numscriptex.CheckLog` struct.
+  Type that represents `Numscriptex.Posting` struct.
 
   ## Fields
   * `:source` account whose the money came from

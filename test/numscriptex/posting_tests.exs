@@ -25,7 +25,7 @@ defmodule Numscriptex.PostingTest do
       %{postings: postings}
     end
 
-    test "transform a list of maps into a list of Posting structs", %{postings: list} do
+    test "transforms a list of maps into a list of %Posting{}", %{postings: list} do
       assert postings = Posting.from_list(list)
 
       assert postings == [
@@ -44,7 +44,7 @@ defmodule Numscriptex.PostingTest do
              ]
     end
 
-    test "transform a map into a Posting struct", %{postings: [map | _]} do
+    test "transforms a map into %Posting{}", %{postings: [map | _]} do
       assert posting = Posting.from_map(map)
 
       assert posting == %Numscriptex.Posting{

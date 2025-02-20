@@ -6,7 +6,7 @@ defmodule Numscriptex.CheckLogTest do
   doctest Numscriptex.CheckLog
 
   describe "from_map/1" do
-    test "transform a map into a Posting struct" do
+    test "transforms a map into %CheckLog{}" do
       map = %{
         character: 10,
         level: :warning,

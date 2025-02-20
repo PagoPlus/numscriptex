@@ -23,8 +23,8 @@ defmodule Numscriptex.Balance do
   @type t() :: %__MODULE__{
           account: bitstring(),
           asset: bitstring(),
-          final_balance: pos_integer(),
-          initial_balance: pos_integer()
+          final_balance: non_neg_integer(),
+          initial_balance: non_neg_integer()
         }
 
   @doc """
@@ -128,8 +128,8 @@ defmodule Numscriptex.Balance do
 
   defp handle_initial_balance(balances, account_assets) do
     Enum.map(balances, fn balance ->
-      account = balance[:account]
-      asset = balance[:asset]
+      account = balance.account
+      asset = balance.asset
 
       initial_balance = account_assets[account][asset] || 0
 
@@ -139,7 +139,7 @@ defmodule Numscriptex.Balance do
 
   defp handle_final_balance(balances, postings) do
     Enum.map(balances, fn balance ->
-      initial_balance = balance[:initial_balance]
+      initial_balance = balance.initial_balance
 
       Enum.reduce(postings, {%{}, initial_balance}, fn posting, {_map, acc} ->
         final_balance = calculate_final_balance(balance, posting, acc)
@@ -153,9 +153,9 @@ defmodule Numscriptex.Balance do
   end
 
   defp calculate_final_balance(balance, posting, initial_balance) do
-    same_asset? = posting["asset"] == balance[:asset]
-    source? = posting["source"] == balance[:account]
-    destination? = posting["destination"] == balance[:account]
+    same_asset? = posting["asset"] == balance.asset
+    source? = posting["source"] == balance.account
+    destination? = posting["destination"] == balance.account
 
     cond do
       source? and destination? and same_asset? ->
@@ -174,8 +174,7 @@ defmodule Numscriptex.Balance do
 
   defp maybe_drop_balance(balances) do
     Enum.reject(balances, fn balance ->
-      balance[:initial_balance] == 0 and
-        balance[:final_balance] == 0
+      balance.initial_balance == 0 and balance.final_balance == 0
     end)
   end
 end
