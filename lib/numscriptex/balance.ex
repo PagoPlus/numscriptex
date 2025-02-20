@@ -12,7 +12,7 @@ defmodule Numscriptex.Balance do
             initial_balance: nil
 
   @typedoc """
-  Type that represents `Numscriptex.CheckLog` struct.
+  Type that represents `Numscriptex.Balance` struct.
 
   ## Fields
   * `:account` the account name
