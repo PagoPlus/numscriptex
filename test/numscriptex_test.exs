@@ -102,7 +102,7 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{
+               %Numscriptex.Posting{
                  amount: 100,
                  asset: "USD/2",
                  destination: "bar",
@@ -111,19 +111,19 @@ defmodule NumscriptexTest do
              ]
 
       assert result.balances == [
-               %{
+               %Numscriptex.Balance{
                  account: "foo",
                  asset: "EUR/2",
                  final_balance: 300,
                  initial_balance: 300
                },
-               %{
+               %Numscriptex.Balance{
                  account: "foo",
                  asset: "USD/2",
                  final_balance: 400,
                  initial_balance: 500
                },
-               %{
+               %Numscriptex.Balance{
                  account: "bar",
                  asset: "USD/2",
                  final_balance: 100,
@@ -154,13 +154,33 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{amount: 100, asset: "USD/2", destination: "bar", source: "foo"},
-               %{amount: 100, asset: "USD/2", destination: "baz", source: "bar"}
+               %Numscriptex.Posting{
+                 amount: 100,
+                 asset: "USD/2",
+                 destination: "bar",
+                 source: "foo"
+               },
+               %Numscriptex.Posting{
+                 amount: 100,
+                 asset: "USD/2",
+                 destination: "baz",
+                 source: "bar"
+               }
              ]
 
       assert result.balances == [
-               %{account: "foo", asset: "USD/2", final_balance: 400, initial_balance: 500},
-               %{account: "baz", asset: "USD/2", final_balance: 100, initial_balance: 0}
+               %Numscriptex.Balance{
+                 account: "foo",
+                 asset: "USD/2",
+                 final_balance: 400,
+                 initial_balance: 500
+               },
+               %Numscriptex.Balance{
+                 account: "baz",
+                 asset: "USD/2",
+                 final_balance: 100,
+                 initial_balance: 0
+               }
              ]
     end
 
@@ -192,25 +212,25 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{
+               %Numscriptex.Posting{
                  amount: 5000,
                  asset: "USD/2",
                  destination: "orders:4567:payment",
                  source: "users:1234:main"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 1000,
                  asset: "USD/2",
                  destination: "orders:4567:payment",
                  source: "users:1234:vouchers:2024-01-31"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 3000,
                  asset: "USD/2",
                  destination: "orders:4567:payment",
                  source: "users:1234:vouchers:2024-02-17"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 1000,
                  asset: "USD/2",
                  destination: "orders:4567:payment",
@@ -219,31 +239,31 @@ defmodule NumscriptexTest do
              ]
 
       assert result.balances == [
-               %{
+               %Numscriptex.Balance{
                  account: "users:1234:main",
                  asset: "USD/2",
                  final_balance: 0,
                  initial_balance: 5000
                },
-               %{
+               %Numscriptex.Balance{
                  account: "users:1234:vouchers:2024-01-31",
                  asset: "USD/2",
                  final_balance: 0,
                  initial_balance: 1000
                },
-               %{
+               %Numscriptex.Balance{
                  account: "users:1234:vouchers:2024-02-17",
                  asset: "USD/2",
                  final_balance: 0,
                  initial_balance: 3000
                },
-               %{
+               %Numscriptex.Balance{
                  account: "users:1234:vouchers:2024-03-22",
                  asset: "USD/2",
                  final_balance: 9000,
                  initial_balance: 10_000
                },
-               %{
+               %Numscriptex.Balance{
                  account: "orders:4567:payment",
                  asset: "USD/2",
                  final_balance: 10_000,
@@ -289,47 +309,52 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{
+               %Numscriptex.Posting{
                  amount: 2000,
                  asset: "USD/2",
                  destination: "payments:4567",
                  source: "coupons:FALL24"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 27_900,
                  asset: "USD/2",
                  destination: "payments:4567",
                  source: "users:1234"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 900,
                  asset: "USD/2",
                  destination: "payments:5678",
                  source: "coupons:FALL24"
                },
-               %{amount: 8100, asset: "USD/2", destination: "payments:5678", source: "users:1234"}
+               %Numscriptex.Posting{
+                 amount: 8100,
+                 asset: "USD/2",
+                 destination: "payments:5678",
+                 source: "users:1234"
+               }
              ]
 
       assert result.balances == [
-               %{
+               %Numscriptex.Balance{
                  account: "coupons:FALL24",
                  asset: "USD/2",
                  final_balance: 97_000,
                  initial_balance: 99_900
                },
-               %{
+               %Numscriptex.Balance{
                  account: "users:1234",
                  asset: "USD/2",
                  final_balance: 64_000,
                  initial_balance: 100_000
                },
-               %{
+               %Numscriptex.Balance{
                  account: "payments:4567",
                  asset: "USD/2",
                  final_balance: 29_900,
                  initial_balance: 0
                },
-               %{
+               %Numscriptex.Balance{
                  account: "payments:5678",
                  asset: "USD/2",
                  final_balance: 9000,
@@ -358,19 +383,39 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{amount: 10, asset: "USD/2", destination: "platform:fees", source: "orders:1234"},
-               %{amount: 90, asset: "USD/2", destination: "merchants:6789", source: "orders:1234"}
+               %Numscriptex.Posting{
+                 amount: 10,
+                 asset: "USD/2",
+                 destination: "platform:fees",
+                 source: "orders:1234"
+               },
+               %Numscriptex.Posting{
+                 amount: 90,
+                 asset: "USD/2",
+                 destination: "merchants:6789",
+                 source: "orders:1234"
+               }
              ]
 
       assert result.balances == [
-               %{
+               %Numscriptex.Balance{
                  account: "orders:1234",
                  asset: "USD/2",
                  final_balance: 900,
                  initial_balance: 1000
                },
-               %{account: "platform:fees", asset: "USD/2", final_balance: 10, initial_balance: 0},
-               %{account: "merchants:6789", asset: "USD/2", final_balance: 90, initial_balance: 0}
+               %Numscriptex.Balance{
+                 account: "platform:fees",
+                 asset: "USD/2",
+                 final_balance: 10,
+                 initial_balance: 0
+               },
+               %Numscriptex.Balance{
+                 account: "merchants:6789",
+                 asset: "USD/2",
+                 final_balance: 90,
+                 initial_balance: 0
+               }
              ]
     end
 
@@ -401,25 +446,25 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{
+               %Numscriptex.Posting{
                  amount: 300,
                  asset: "USD/2",
                  destination: "platform:commission:sales_tax",
                  source: "orders:1234"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 1200,
                  asset: "USD/2",
                  destination: "platform:commission:revenue",
                  source: "orders:1234"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 500,
                  asset: "USD/2",
                  destination: "users:1234:cashback",
                  source: "orders:1234"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 8000,
                  asset: "USD/2",
                  destination: "merchants:6789",
@@ -428,31 +473,31 @@ defmodule NumscriptexTest do
              ]
 
       assert result.balances == [
-               %{
+               %Numscriptex.Balance{
                  account: "orders:1234",
                  asset: "USD/2",
                  final_balance: 0,
                  initial_balance: 10_000
                },
-               %{
+               %Numscriptex.Balance{
                  account: "platform:commission:sales_tax",
                  asset: "USD/2",
                  final_balance: 300,
                  initial_balance: 0
                },
-               %{
+               %Numscriptex.Balance{
                  account: "platform:commission:revenue",
                  asset: "USD/2",
                  final_balance: 1200,
                  initial_balance: 0
                },
-               %{
+               %Numscriptex.Balance{
                  account: "users:1234:cashback",
                  asset: "USD/2",
                  final_balance: 500,
                  initial_balance: 0
                },
-               %{
+               %Numscriptex.Balance{
                  account: "merchants:6789",
                  asset: "USD/2",
                  final_balance: 8000,
@@ -478,12 +523,27 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{amount: 500, asset: "USD/2", destination: "payment", source: "users:1234"}
+               %Numscriptex.Posting{
+                 amount: 500,
+                 asset: "USD/2",
+                 destination: "payment",
+                 source: "users:1234"
+               }
              ]
 
       assert result.balances == [
-               %{account: "users:1234", asset: "USD/2", final_balance: 0, initial_balance: 500},
-               %{account: "payment", asset: "USD/2", final_balance: 500, initial_balance: 0}
+               %Numscriptex.Balance{
+                 account: "users:1234",
+                 asset: "USD/2",
+                 final_balance: 0,
+                 initial_balance: 500
+               },
+               %Numscriptex.Balance{
+                 account: "payment",
+                 asset: "USD/2",
+                 final_balance: 500,
+                 initial_balance: 0
+               }
              ]
     end
 
@@ -512,14 +572,19 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{amount: 100, asset: "USD/2", destination: "payments:4567", source: "users:1234"},
-               %{
+               %Numscriptex.Posting{
+                 amount: 100,
+                 asset: "USD/2",
+                 destination: "payments:4567",
+                 source: "users:1234"
+               },
+               %Numscriptex.Posting{
                  amount: 1000,
                  asset: "USD/2",
                  destination: "payments:4567",
                  source: "users:2345:credit"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 5000,
                  asset: "USD/2",
                  destination: "payments:4567",
@@ -528,20 +593,25 @@ defmodule NumscriptexTest do
              ]
 
       assert result.balances == [
-               %{
+               %Numscriptex.Balance{
                  account: "users:2345:main",
                  asset: "USD/2",
                  final_balance: 0,
                  initial_balance: 5000
                },
-               %{account: "users:1234", asset: "USD/2", final_balance: -100, initial_balance: 0},
-               %{
+               %Numscriptex.Balance{
+                 account: "users:1234",
+                 asset: "USD/2",
+                 final_balance: -100,
+                 initial_balance: 0
+               },
+               %Numscriptex.Balance{
                  account: "payments:4567",
                  asset: "USD/2",
                  final_balance: 6100,
                  initial_balance: 0
                },
-               %{
+               %Numscriptex.Balance{
                  account: "users:2345:credit",
                  asset: "USD/2",
                  final_balance: -1000,
@@ -570,12 +640,27 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{amount: 5, asset: "USD/2", destination: "platform:fees", source: "users:1234"}
+               %Numscriptex.Posting{
+                 amount: 5,
+                 asset: "USD/2",
+                 destination: "platform:fees",
+                 source: "users:1234"
+               }
              ]
 
       assert result.balances == [
-               %{account: "users:1234", asset: "USD/2", final_balance: 495, initial_balance: 500},
-               %{account: "platform:fees", asset: "USD/2", final_balance: 5, initial_balance: 0}
+               %Numscriptex.Balance{
+                 account: "users:1234",
+                 asset: "USD/2",
+                 final_balance: 495,
+                 initial_balance: 500
+               },
+               %Numscriptex.Balance{
+                 account: "platform:fees",
+                 asset: "USD/2",
+                 final_balance: 5,
+                 initial_balance: 0
+               }
              ]
     end
 
@@ -608,21 +693,66 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{amount: 50, asset: "USD/2", destination: "bar", source: "foo"},
-               %{amount: 49, asset: "USD/2", destination: "baz", source: "foo"},
-               %{amount: 20, asset: "USD/2", destination: "b", source: "a"},
-               %{amount: 20, asset: "USD/2", destination: "c", source: "a"},
-               %{amount: 59, asset: "USD/2", destination: "d", source: "a"}
+               %Numscriptex.Posting{
+                 amount: 50,
+                 asset: "USD/2",
+                 destination: "bar",
+                 source: "foo"
+               },
+               %Numscriptex.Posting{
+                 amount: 49,
+                 asset: "USD/2",
+                 destination: "baz",
+                 source: "foo"
+               },
+               %Numscriptex.Posting{amount: 20, asset: "USD/2", destination: "b", source: "a"},
+               %Numscriptex.Posting{amount: 20, asset: "USD/2", destination: "c", source: "a"},
+               %Numscriptex.Posting{amount: 59, asset: "USD/2", destination: "d", source: "a"}
              ]
 
       assert result.balances == [
-               %{account: "a", asset: "USD/2", final_balance: 901, initial_balance: 1000},
-               %{account: "foo", asset: "USD/2", final_balance: 901, initial_balance: 1000},
-               %{account: "bar", asset: "USD/2", final_balance: 50, initial_balance: 0},
-               %{account: "baz", asset: "USD/2", final_balance: 49, initial_balance: 0},
-               %{account: "b", asset: "USD/2", final_balance: 20, initial_balance: 0},
-               %{account: "c", asset: "USD/2", final_balance: 20, initial_balance: 0},
-               %{account: "d", asset: "USD/2", final_balance: 59, initial_balance: 0}
+               %Numscriptex.Balance{
+                 account: "a",
+                 asset: "USD/2",
+                 final_balance: 901,
+                 initial_balance: 1000
+               },
+               %Numscriptex.Balance{
+                 account: "foo",
+                 asset: "USD/2",
+                 final_balance: 901,
+                 initial_balance: 1000
+               },
+               %Numscriptex.Balance{
+                 account: "bar",
+                 asset: "USD/2",
+                 final_balance: 50,
+                 initial_balance: 0
+               },
+               %Numscriptex.Balance{
+                 account: "baz",
+                 asset: "USD/2",
+                 final_balance: 49,
+                 initial_balance: 0
+               },
+               %Numscriptex.Balance{
+                 account: "b",
+                 asset: "USD/2",
+                 final_balance: 20,
+                 initial_balance: 0
+               },
+               %Numscriptex.Balance{
+                 account: "c",
+                 asset: "USD/2",
+                 final_balance: 20,
+                 initial_balance: 0
+               },
+               %Numscriptex.Balance{
+                 account: "d",
+                 asset: "USD/2",
+                 final_balance: 59,
+                 initial_balance: 0
+               }
              ]
     end
 
@@ -652,8 +782,13 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{amount: 20, asset: "USD/2", destination: "platform:tax", source: "users:1234"},
-               %{
+               %Numscriptex.Posting{
+                 amount: 20,
+                 asset: "USD/2",
+                 destination: "platform:tax",
+                 source: "users:1234"
+               },
+               %Numscriptex.Posting{
                  amount: 80,
                  asset: "USD/2",
                  destination: "platform:revenue",
@@ -662,14 +797,19 @@ defmodule NumscriptexTest do
              ]
 
       assert result.balances == [
-               %{
+               %Numscriptex.Balance{
                  account: "users:1234",
                  asset: "USD/2",
                  final_balance: 9900,
                  initial_balance: 10_000
                },
-               %{account: "platform:tax", asset: "USD/2", final_balance: 20, initial_balance: 0},
-               %{
+               %Numscriptex.Balance{
+                 account: "platform:tax",
+                 asset: "USD/2",
+                 final_balance: 20,
+                 initial_balance: 0
+               },
+               %Numscriptex.Balance{
                  account: "platform:revenue",
                  asset: "USD/2",
                  final_balance: 80,
@@ -708,13 +848,13 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{
+               %Numscriptex.Posting{
                  amount: 150,
                  asset: "USD/2",
                  destination: "platform:fees",
                  source: "orders:2345"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 850,
                  asset: "USD/2",
                  destination: "merchants:1234",
@@ -723,14 +863,19 @@ defmodule NumscriptexTest do
              ]
 
       assert result.balances == [
-               %{account: "orders:2345", asset: "USD/2", final_balance: 0, initial_balance: 1000},
-               %{
+               %Numscriptex.Balance{
+                 account: "orders:2345",
+                 asset: "USD/2",
+                 final_balance: 0,
+                 initial_balance: 1000
+               },
+               %Numscriptex.Balance{
                  account: "platform:fees",
                  asset: "USD/2",
                  final_balance: 150,
                  initial_balance: 0
                },
-               %{
+               %Numscriptex.Balance{
                  account: "merchants:1234",
                  asset: "USD/2",
                  final_balance: 850,
@@ -753,7 +898,7 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{
+               %Numscriptex.Posting{
                  amount: 1000,
                  asset: "USD/2",
                  destination: "user",
@@ -762,7 +907,7 @@ defmodule NumscriptexTest do
              ]
 
       assert result.balances == [
-               %{
+               %Numscriptex.Balance{
                  account: "user",
                  asset: "USD/2",
                  final_balance: 1000,
@@ -789,19 +934,19 @@ defmodule NumscriptexTest do
       assert {:ok, result} = Numscriptex.run(script, struct)
 
       assert result.postings == [
-               %{
+               %Numscriptex.Posting{
                  amount: 620,
                  asset: "USD/2",
                  destination: "user",
                  source: "user"
                },
-               %{
+               %Numscriptex.Posting{
                  amount: 270,
                  asset: "USD/2",
                  destination: "user2",
                  source: "user"
                },
-               %{
+               %Numscriptex.Posting{
                  source: "user",
                  destination: "user3",
                  amount: 110,
@@ -810,19 +955,19 @@ defmodule NumscriptexTest do
              ]
 
       assert result.balances == [
-               %{
+               %Numscriptex.Balance{
                  account: "user",
                  asset: "USD/2",
                  final_balance: 620,
                  initial_balance: 1000
                },
-               %{
+               %Numscriptex.Balance{
                  account: "user2",
                  asset: "USD/2",
                  final_balance: 1270,
                  initial_balance: 1000
                },
-               %{
+               %Numscriptex.Balance{
                  account: "user3",
                  asset: "USD/2",
                  final_balance: 110,

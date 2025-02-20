@@ -5,7 +5,6 @@ defmodule Numscriptex.CheckLog do
   """
 
   @derive JSON.Encoder
-
   defstruct character: nil,
             level: nil,
             line: nil,
