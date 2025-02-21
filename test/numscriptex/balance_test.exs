@@ -1,9 +1,9 @@
-defmodule Numscriptex.BalancesTest do
+defmodule Numscriptex.BalanceTest do
   use ExUnit.Case
 
-  alias Numscriptex.Balances
+  alias Numscriptex.Balance
 
-  doctest Balances
+  doctest Balance
 
   setup_all do
     postings =
@@ -34,12 +34,27 @@ defmodule Numscriptex.BalancesTest do
       }
 
       target = [
-        %{"account" => "bar", "asset" => "USD/2", "final_balance" => 50, "initial_balance" => 0},
-        %{"account" => "baz", "asset" => "USD/2", "final_balance" => 49, "initial_balance" => 0},
-        %{"account" => "foo", "asset" => "USD/2", "final_balance" => 1, "initial_balance" => 100}
+        %Numscriptex.Balance{
+          account: "bar",
+          asset: "USD/2",
+          final_balance: 50,
+          initial_balance: 0
+        },
+        %Numscriptex.Balance{
+          account: "baz",
+          asset: "USD/2",
+          final_balance: 49,
+          initial_balance: 0
+        },
+        %Numscriptex.Balance{
+          account: "foo",
+          asset: "USD/2",
+          final_balance: 1,
+          initial_balance: 100
+        }
       ]
 
-      assert balances = Balances.put(initial_balances, postings)
+      assert balances = Balance.put(initial_balances, postings)
       assert balances == target
     end
 
@@ -54,7 +69,7 @@ defmodule Numscriptex.BalancesTest do
       refute any_asset_on_postings?("BRL/2", postings)
       refute any_asset_on_postings?("EUR/2", postings)
 
-      assert balances = Balances.put(initial_balances, postings)
+      assert balances = Balance.put(initial_balances, postings)
       assert asset_untouched?("EUR/2", balances)
       assert asset_untouched?("BRL/2", balances)
       refute asset_untouched?("USD/2", balances)
@@ -68,8 +83,8 @@ defmodule Numscriptex.BalancesTest do
   end
 
   defp asset_untouched?(asset, balances) do
-    target = Enum.find(balances, false, fn balance -> balance["asset"] == asset end)
+    target = Enum.find(balances, false, fn balance -> balance.asset == asset end)
 
-    if target, do: target["final_balance"] == target["initial_balance"]
+    if target, do: target.final_balance == target.initial_balance
   end
 end

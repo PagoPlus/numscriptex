@@ -8,46 +8,31 @@ defmodule Numscriptex do
   """
 
   alias Numscriptex.AssetsManager
-  alias Numscriptex.Balances
+  alias Numscriptex.Balance
   alias Numscriptex.CheckLog
+  alias Numscriptex.Posting
   alias Numscriptex.Utilities
 
   require AssetsManager
 
   AssetsManager.ensure_wasm_binary_is_valid()
 
-  @type check_log() :: CheckLog.t()
-
   @type check_result() :: %{
           required(:script) => binary(),
-          optional(:hints) => list(check_log()),
-          optional(:infos) => list(check_log()),
-          optional(:warnings) => list(check_log())
+          optional(:hints) => list(CheckLog.t()),
+          optional(:infos) => list(CheckLog.t()),
+          optional(:warnings) => list(CheckLog.t())
         }
 
   @type run_result() :: %{
-          required(:balances) => balances(),
-          required(:postings) => postings(),
+          required(:balances) => list(Balance.t()),
+          required(:postings) => list(Posting.t()),
           required(:accountsMeta) => map(),
           required(:txMeta) => map()
         }
 
-  @type balances() :: %{
-          required(:initial_balance) => integer(),
-          required(:final_balance) => integer(),
-          required(:asset) => binary(),
-          required(:account) => binary()
-        }
-
-  @type postings() :: %{
-          required(:destination) => binary(),
-          required(:source) => binary(),
-          required(:asset) => binary(),
-          required(:amount) => integer()
-        }
-
   @type errors() :: %{
-          required(:reason) => list(check_log()) | any(),
+          required(:reason) => list(CheckLog.t()) | any(),
           optional(:details) => any()
         }
 
@@ -140,6 +125,7 @@ defmodule Numscriptex do
       result
       |> Map.put_new(:accountsMeta, %{})
       |> Map.put_new(:txMeta, %{})
+      |> Map.update!(:postings, &Posting.from_list/1)
 
     {:ok, standardized_result}
   end
@@ -147,12 +133,12 @@ defmodule Numscriptex do
   defp standardize_run_result({:error, _reason} = errors), do: errors
 
   defp maybe_put_final_balance({:ok, %{"postings" => postings} = result}, initial_balance) do
-    balances = Balances.put(initial_balance, postings)
+    balances = Balance.put(initial_balance, postings)
 
     normalized_result =
       result
-      |> Map.put("balances", balances)
       |> Utilities.normalize_keys(:atom)
+      |> Map.put(:balances, balances)
 
     {:ok, normalized_result}
   end

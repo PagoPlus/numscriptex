@@ -1,11 +1,12 @@
 defmodule Numscriptex.CheckLogTest do
   use ExUnit.Case
-  doctest Numscriptex.CheckLog
 
   alias Numscriptex.CheckLog
 
+  doctest Numscriptex.CheckLog
+
   describe "from_map/1" do
-    test "creates a new struct from a map" do
+    test "transforms a map into %CheckLog{}" do
       map = %{
         character: 10,
         level: :warning,

@@ -6,7 +6,6 @@ defmodule Numscriptex.Run do
   """
 
   @derive JSON.Encoder
-
   defstruct variables: %{},
             balances: %{},
             metadata: %{}

@@ -14,7 +14,7 @@ You will just need to add `:numscriptex` as a dependency on your `mix.exs`, and 
 ```elixir
 def deps do
   [
-    {:numscriptex, "~> 0.2.1"}
+    {:numscriptex, "~> 0.2.2"}
   ]
 end
 ```
@@ -149,7 +149,7 @@ Where result will be something like this:
 ```elixir
 iex> %{
 ...>   postings: [
-...>           %{
+  ...>           %Numscriptex.Posting{
 ...>             amount: 100,
 ...>             asset: "USD/2",
 ...>             destination: "bar",
@@ -157,19 +157,19 @@ iex> %{
 ...>           }
 ...>         ],
 ...>   balances: [
-...>           %{
+...>           %Numscriptex.Balance{
 ...>             account: "foo",
 ...>             asset: "EUR/2",
 ...>             final_balance: 300,
 ...>             initial_balance: 300
 ...>           },
-...>           %{
+...>           %Numscriptex.Balance{
 ...>             account: "foo",
 ...>             asset: "USD/2",
 ...>             final_balance: 400,
 ...>             initial_balance: 500
 ...>           },
-...>           %{
+...>           %Numscriptex.Balance{
 ...>             account: "bar",
 ...>             asset: "USD/2",
 ...>             final_balance: 100,
