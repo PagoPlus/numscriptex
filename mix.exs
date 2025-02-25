@@ -56,9 +56,29 @@ defmodule Numscriptex.MixProject do
     [
       main: "readme",
       name: "NumscriptEx",
+      extra_section: "guides",
       suorce_ref: "v#{@version}",
       source_url: @source_url,
-      extras: ["README.md"]
+      extras: extras(),
+      groups_for_extras: groups_for_extras()
+    ]
+  end
+
+  defp extras do
+    [
+      "README.md": [
+        title: "Readme"
+      ],
+      "guides/builder.md": [
+        title: "Building Numscripts",
+        filename: "builder-introduction"
+      ]
+    ]
+  end
+
+  defp groups_for_extras() do
+    [
+      Tutorial: Path.wildcard("guides/*.md")
     ]
   end
 
