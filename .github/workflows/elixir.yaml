@@ -78,7 +78,6 @@ jobs:
           version-type: strict
 
       - name: Set Git to use LF insted of CRLF on Windows
-        if: runner.os == 'Windows-27.2'
         run: |
           git config --global core.autocrlf false
           git config --global core.eol lf
