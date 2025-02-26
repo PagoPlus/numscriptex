@@ -1,5 +1,5 @@
 # Builder
-This is a feature that makes possible to build numscripts dynamically within your application.
+This is a feature that makes it possible to build numscripts dynamically within your application.
 
 ## Usage
 You just need to call `Numscriptex.Builder.build/1` with the metadata necessary to build your numscript.
@@ -45,7 +45,7 @@ With the metadata type above in mind, let's build a simple numscript.
       amount: 20,
       account: "some:destination"
     }
-  ]
+  ],
   remaining_to: "another:destination",
   percent_asset: "USD"
 }
@@ -114,7 +114,7 @@ send [USD 500] (
 ```
 
 ### Example 2
-Nested percent type plus fixed
+Nested percent-type, plus fixed
 ```elixir
 %{
   splits: [
@@ -169,7 +169,7 @@ Note that the `asset` field inside of nested destinations will be ignored, given
 they all go under the same `send` scope.
 
 ### Example 3
-Nested percent type plus fixed, and with fixed inside nests
+Nested percent-type, plus fixed, and with fixed-type within nests
 ```elixir
 %{
   splits: [
@@ -271,4 +271,4 @@ send [EUR 1050] (
 )
 ```
 Note that the `fixed` types in nested `splits` (i.e. `splits` fields inside of `splits` fields) will be popped out and still
-be builded after the `percent` types.
+be built after the `percent` types.

@@ -5,7 +5,7 @@ defmodule Numscriptex.Builder do
 
   @type percent_split() :: %{
           required(:type) => :fixed | :percent,
-          required(:amount) => float(),
+          required(:amount) => pos_integer(),
           optional(:account) => bitstring(),
           optional(:splits) => list(percent_split()),
           optional(:remaining_to) => bitstring()
@@ -13,7 +13,7 @@ defmodule Numscriptex.Builder do
 
   @type fixed_split() :: %{
           required(:type) => :fixed | :percent,
-          required(:amount) => float(),
+          required(:amount) => pos_integer(),
           required(:account) => bitstring(),
           required(:asset) => bitstring()
         }
@@ -32,7 +32,7 @@ defmodule Numscriptex.Builder do
   ...>   splits: [
   ...>     %{
   ...>       type: :fixed,
-  ...>       amount: 5,
+  ...>       amount: 500,
   ...>       asset: "BRL/2",
   ...>       account: "some:destination"
   ...>     }
@@ -109,15 +109,10 @@ defmodule Numscriptex.Builder do
   defp maybe_build_fixed_values_numscript([]), do: ""
 
   defp maybe_build_fixed_values_numscript(metadata) do
-    metadata
-    |> Enum.map(fn %{amount: amount, type: :fixed} = data ->
-      %{data | amount: normalize_amount(amount)}
+    Enum.reduce(metadata, "", fn data, acc ->
+      acc <> build_numscript(data)
     end)
-    |> Enum.reduce("", fn data, acc -> acc <> build_numscript(data) end)
   end
-
-  defp normalize_amount(amount) when is_integer(amount), do: amount * 100
-  defp normalize_amount(amount) when is_float(amount), do: trunc(amount * 100)
 
   defp build_numscript(%{type: :percent, splits: [_ | _] = splits} = metadata) do
     initial = start_portioned_dest(metadata.amount)

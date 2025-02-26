@@ -11,7 +11,7 @@ defmodule Numscriptex.BuilderTest do
         splits: [
           %{
             type: :fixed,
-            amount: 5,
+            amount: 500,
             asset: "USD",
             account: "some:destination"
           }
@@ -66,7 +66,7 @@ defmodule Numscriptex.BuilderTest do
           },
           %{
             type: :fixed,
-            amount: 10,
+            amount: 1000,
             asset: "USD",
             account: "some:destination:b"
           }
@@ -98,7 +98,7 @@ defmodule Numscriptex.BuilderTest do
         splits: [
           %{
             type: :fixed,
-            amount: 10.5,
+            amount: 1050,
             asset: "EUR",
             account: "some:destination:a"
           },
@@ -114,7 +114,7 @@ defmodule Numscriptex.BuilderTest do
             splits: [
               %{
                 type: :fixed,
-                amount: 12.5,
+                amount: 1250,
                 asset: "USD",
                 account: "some:destination:c"
               },
@@ -135,7 +135,7 @@ defmodule Numscriptex.BuilderTest do
                 splits: [
                   %{
                     type: :fixed,
-                    amount: 5,
+                    amount: 500,
                     asset: "BRL",
                     account: "some:destination:b"
                   },
