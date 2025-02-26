@@ -12,7 +12,7 @@ defmodule Numscriptex.BuilderTest do
           %{
             type: :fixed,
             amount: 5,
-            asset: "USD/2",
+            asset: "USD",
             account: "some:destination"
           }
         ]
@@ -22,7 +22,7 @@ defmodule Numscriptex.BuilderTest do
       assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
-             send [USD/2 500] (
+             send [USD 500] (
                source = @user
                destination = @some:destination
              )
@@ -35,18 +35,18 @@ defmodule Numscriptex.BuilderTest do
           %{
             type: :percent,
             amount: 20,
-            asset: "USD/2",
+            asset: "USD",
             account: "some:destination"
           }
         ],
-        percent_asset: "USD/2"
+        percent_asset: "USD"
       }
 
       assert {:ok, %{script: script}} = Builder.build(metadata)
       assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
-             send [USD/2 *] (
+             send [USD *] (
                source = @user
                destination = {
                  20% to @some:destination
@@ -67,11 +67,11 @@ defmodule Numscriptex.BuilderTest do
           %{
             type: :fixed,
             amount: 10,
-            asset: "USD/2",
+            asset: "USD",
             account: "some:destination:b"
           }
         ],
-        percent_asset: "USD/2",
+        percent_asset: "USD",
         remaining_to: "another:destination"
       }
 
@@ -79,14 +79,14 @@ defmodule Numscriptex.BuilderTest do
       assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
-             send [USD/2 *] (
+             send [USD *] (
                source = @user
                destination = {
                  20% to @some:destination:a
                  remaining to @another:destination
                }
              )
-             send [USD/2 1000] (
+             send [USD 1000] (
                source = @user
                destination = @some:destination:b
              )
@@ -99,7 +99,7 @@ defmodule Numscriptex.BuilderTest do
           %{
             type: :fixed,
             amount: 10.5,
-            asset: "EUR/2",
+            asset: "EUR",
             account: "some:destination:a"
           },
           %{
@@ -115,7 +115,7 @@ defmodule Numscriptex.BuilderTest do
               %{
                 type: :fixed,
                 amount: 12.5,
-                asset: "USD/2",
+                asset: "USD",
                 account: "some:destination:c"
               },
               %{
@@ -136,7 +136,7 @@ defmodule Numscriptex.BuilderTest do
                   %{
                     type: :fixed,
                     amount: 5,
-                    asset: "BRL/2",
+                    asset: "BRL",
                     account: "some:destination:b"
                   },
                   %{
@@ -155,14 +155,14 @@ defmodule Numscriptex.BuilderTest do
           }
         ],
         remaining_to: "remaining:destination:a",
-        percent_asset: "EUR/2"
+        percent_asset: "EUR"
       }
 
       assert {:ok, %{script: script}} = Builder.build(metadata)
       assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
-             send [EUR/2 *] (
+             send [EUR *] (
                source = @user
                destination = {
                  20% to @some:destination:b
@@ -179,15 +179,15 @@ defmodule Numscriptex.BuilderTest do
                  remaining to @remaining:destination:a
                }
              )
-             send [BRL/2 500] (
+             send [BRL 500] (
                source = @user
                destination = @some:destination:b
              )
-             send [USD/2 1250] (
+             send [USD 1250] (
                source = @user
                destination = @some:destination:c
              )
-             send [EUR/2 1050] (
+             send [EUR 1050] (
                source = @user
                destination = @some:destination:a
              )
