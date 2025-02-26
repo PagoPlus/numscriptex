@@ -1,4 +1,7 @@
 # NumscriptEx
+[![Hex Version](https://img.shields.io/hexpm/v/numscriptex.svg)](https://hex.pm/packages/numscriptex)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/numscriptex/)
+
 NumscriptEx is a library that allows its users to check and run Numscripts in Elixir. If this is your first time hearing about
 Numscripts, here is a quick explanation:
 
@@ -35,12 +38,12 @@ config :numscriptex,
 These above are the default values.
 
 ## Usage
-This library basically has two core functions: `Numscriptex.check/1` and `Numscriptex.run/2`.
+You can build Numscripts dynamically with `Numscriptex.Builder.build/1`, check if your script is valid with `Numscriptex.check/1`,
+and last but not least, you can run your script with `Numscriptex.run/2`.
 
-Want to check if your script is valid and ready to go? Use the `check/1` function.
-Already checked the script and want to execute it? Use the `run/2` function.
+You can read more about the `Numscriptex.Builder` module and how to use it on its [guide](https://github.com/PagoPlus/numscriptex/blob/main/guides/builder.md)
 
-But before introducing these two functions, you will need to know what is the `Numscriptex.Run` struct.
+And before introducing the other two functions, you will need to know what is the `Numscriptex.Run` struct.
 
 ### Numscriptex.Run
 A numscript needs some other data aside the script itself to run correctly, and
@@ -184,4 +187,4 @@ iex> %{
 ## License
 Copyright (c) 2025 MedFlow
 
-This library is MIT licensed. See the [LICENSE](https://github.com/PagoPlus/numscriptex/blob/main/README.md) for details.
+This library is MIT licensed. See the [LICENSE](https://github.com/PagoPlus/numscriptex/blob/main/LINCESE) for details.

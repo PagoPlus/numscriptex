@@ -16,7 +16,7 @@ defmodule Numscriptex.Posting do
   * `:source` account whose the money came from
   * `:asset` the asset were the transaction was made
   * `:destination` account whose the money will go to
-  * `:amount` amount of mone transferred (in integer)
+  * `:amount` amount of money transferred (integer)
   """
   @type t() :: %__MODULE__{
           amount: pos_integer(),
