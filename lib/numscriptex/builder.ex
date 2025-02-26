@@ -1,6 +1,6 @@
 defmodule Numscriptex.Builder do
   @moduledoc """
-  `Numscriptex.Builder` makes possible to build Numscripts dynamically within your application.
+  `Numscriptex.Builder` makes it possible to build Numscripts dynamically within your application.
   """
 
   @type percent_split() :: %{
@@ -43,8 +43,7 @@ defmodule Numscriptex.Builder do
   {:ok, %{script: "send [BRL/2 500] (\n  source = @user\n  destination = @some:destination\n)\n"}}
   ```
 
-  Since this feature is a bit confusing, you can read more about on
-  the [Builder Guide](https://github.com/PagoPlus/numscriptex/blob/main/guides/builder.md)
+  If you want to learn more about this feature you can check its guide [here](https://github.com/PagoPlus/numscriptex/blob/main/guides/builder.md)
   """
   @spec build(metadata()) :: {:ok, %{script: bitstring()}} | {:error, bitstring()}
   def build(%{splits: _splits} = metadata) do

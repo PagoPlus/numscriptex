@@ -5,20 +5,23 @@ This is a feature that makes possible to build numscripts dynamically within you
 You just need to call `Numscriptex.Builder.build/1` with the metadata necessary to build your numscript.
 
 ### Metadata
-Metadata is the sole argument you need to use the `build/1` function, wich have the following fields:
+Metadata is the sole argument you need to use the `build/1` function, wich has the following fields:
 
 Required fields:
 - splits: a list of metadata needed to build numscripts (explained below)
 
 Optional fields:
 - percent_asset: monetary asset (BRL, USD, EUR, and etc.) to use when build numscripts using percentage values.
-- remaining_to¹: where the rest of the money will go after the transaction
-  - Only needed if you want to designate an specific destination, the default is `remaining kept` wich makes the remainder go back to the source.
+- remaining_to: where the rest of the money will go after the transaction is made
+  - Only needed if you want to designate a specific destination. The default is [remaining kept](https://docs.formance.com/numscript/reference/destinations#allocation-destinations) wich makes the remainder go back to the source.
 
 About the "list of metadata" mentioned on the `split` field above:
+
 Required fields:
 - account: account whose the money will go to
-- amount: amount of money transferred (accepts both integer and float)
+- amount: amount of money transferred (accepts both integer and float), but be aware that:
+  - this field is treated as the literal amount you want to send (e.g. if yout want to send $5, your amount field must be 5 or 5.0)
+  - Numscript treats its amounts as integers insted of literals like `Numscriptex`(e.g. $5 would be 500), so the script generated will send 500 instead of 5.
 - type: the amount type, accepts two values:
   - fixed: treats the `amount` field as a number
   - percent: treats the `amount` field as a percentage value
@@ -44,12 +47,12 @@ With the metadata type above in mind, let's build a simple numscript.
     }
   ]
   remaining_to: "another:destination",
-  percent_asset: "USD/2"
+  percent_asset: "USD"
 }
 ```
 Wich will generate the following numscript:
 ```
-send [USD/2 *] (
+send [USD *] (
   source = @user
   destination = {
     20% to @some:destination
@@ -59,7 +62,7 @@ send [USD/2 *] (
 ```
 If the `:remaining_to` field were not defined, the remaining would be kept:
 ```
-send [USD/2 *] (
+send [USD *] (
   source = @user
   destination = {
     20% to @some:destination
@@ -69,7 +72,7 @@ send [USD/2 *] (
 ```
 
 P.S.: The percent amount types will always be executed first, so we can assure that
-all of the percentage is based off of the initial value. This feature is still in
+all of the percentages are based off of the initial value. This feature is still in
 development as we speak, but soon we will have more flexibility in those regards.
 
 ## Examples
@@ -81,7 +84,7 @@ Both fixed and percent types:
     %{
       type: :fixed,
       amount: 5,
-      asset: "USD/2",
+      asset: "USD",
       account: "some:destination:a"
     },
     %{
@@ -91,12 +94,12 @@ Both fixed and percent types:
     }
   ],
   remaining_to: "some:destination:c",
-  percent_asset: "USD/2"
+  percent_asset: "USD"
 }
 ```
-Will build:
+Will generate:
 ```
-send [USD/2 *] (
+send [USD *] (
   source = @user
   destination = {
     20% to @some:destination:b
@@ -104,7 +107,7 @@ send [USD/2 *] (
   }
 )
 
-send [USD/2 500] (
+send [USD 500] (
   source = @user
   destination = @some:destination:a
 )
@@ -118,7 +121,7 @@ Nested percent type plus fixed
     %{
       type: :fixed,
       amount: 12.5,
-      asset: "USD/2",
+      asset: "USD",
       account: "some:destination:a"
     },
     %{
@@ -140,12 +143,12 @@ Nested percent type plus fixed
     }
   ],
   remaining_to: "remaining:destination:a",
-  percent_asset: "USD/2"
+  percent_asset: "USD"
 }
 ```
-Will build:
+Will generate:
 ```
-send [USD/2 *] (
+send [USD *] (
   source = @user
   destination = {
     30% to {
@@ -157,7 +160,7 @@ send [USD/2 *] (
   }
 )
 
-send [USD/2 1250] (
+send [USD 1250] (
   source = @user
   destination = @some:destination:a
 )
@@ -173,7 +176,7 @@ Nested percent type plus fixed, and with fixed inside nests
     %{
       type: :fixed,
       amount: 10.5,
-      asset: "EUR/2",
+      asset: "EUR",
       account: "some:destination:a"
     },
     %{
@@ -189,7 +192,7 @@ Nested percent type plus fixed, and with fixed inside nests
         %{
           type: :fixed,
           amount: 12.5,
-          asset: "USD/2",
+          asset: "USD",
           account: "some:destination:c"
         },
         %{
@@ -210,7 +213,7 @@ Nested percent type plus fixed, and with fixed inside nests
             %{
               type: :fixed,
               amount: 5,
-              asset: "BRL/2",
+              asset: "BRL",
               account: "some:destination:b"
             },
             %{
@@ -229,12 +232,12 @@ Nested percent type plus fixed, and with fixed inside nests
     }
   ],
   remaining_to: "remaining:destination:a",
-  percent_asset: "EUR/2"
+  percent_asset: "EUR"
 }
 ```
-Will build:
+Will generate:
 ```
-send [EUR/2 *] (
+send [EUR *] (
   source = @user
   destination = {
     20% to @some:destination:b
@@ -252,20 +255,20 @@ send [EUR/2 *] (
   }
 )
 
-send [USD/2 1250] (
+send [USD 1250] (
   source = @user
   destination = @some:destination:c
 )
 
-send [BRL/2 500] (
+send [BRL 500] (
   source = @user
   destination = @some:destination:b
 )
 
-send [EUR/2 1050] (
+send [EUR 1050] (
   source = @user
   destination = @some:destination:a
 )
 ```
-Note that the `fixed` types inside nests will be popped out and still be build after
-the `percent` types.
+Note that the `fixed` types in nested `splits` (i.e. `splits` fields inside of `splits` fields) will be popped out and still
+be builded after the `percent` types.
