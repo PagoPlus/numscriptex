@@ -19,9 +19,7 @@ About the "list of metadata" mentioned on the `split` field above:
 
 Required fields:
 - account: account whose the money will go to
-- amount: amount of money transferred (accepts both integer and float), but be aware that:
-  - this field is treated as the literal amount you want to send (e.g. if yout want to send $5, your amount field must be 5 or 5.0)
-  - Numscript treats its amounts as integers insted of literals like `Numscriptex`(e.g. $5 would be 500), so the script generated will send 500 instead of 5.
+- amount: amount of money transferred. Be aware that this field only accepts integer values, so if you want to send $5 your amount field value should be 500.
 - type: the amount type, accepts two values:
   - fixed: treats the `amount` field as a number
   - percent: treats the `amount` field as a percentage value
@@ -83,7 +81,7 @@ Both fixed and percent types:
   splits: [
     %{
       type: :fixed,
-      amount: 5,
+      amount: 500,
       asset: "USD",
       account: "some:destination:a"
     },
@@ -120,7 +118,7 @@ Nested percent-type, plus fixed
   splits: [
     %{
       type: :fixed,
-      amount: 12.5,
+      amount: 1250,
       asset: "USD",
       account: "some:destination:a"
     },
@@ -175,7 +173,7 @@ Nested percent-type, plus fixed, and with fixed-type within nests
   splits: [
     %{
       type: :fixed,
-      amount: 10.5,
+      amount: 1050,
       asset: "EUR",
       account: "some:destination:a"
     },
@@ -191,7 +189,7 @@ Nested percent-type, plus fixed, and with fixed-type within nests
       splits: [
         %{
           type: :fixed,
-          amount: 12.5,
+          amount: 1250,
           asset: "USD",
           account: "some:destination:c"
         },
@@ -212,7 +210,7 @@ Nested percent-type, plus fixed, and with fixed-type within nests
           splits: [
             %{
               type: :fixed,
-              amount: 5,
+              amount: 500,
               asset: "BRL",
               account: "some:destination:b"
             },
