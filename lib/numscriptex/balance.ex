@@ -5,11 +5,15 @@ defmodule Numscriptex.Balance do
   can see the results of all transactions.
   """
 
+  alias Numscriptex.Utilities
+
   @derive JSON.Encoder
   defstruct account: nil,
             asset: nil,
             final_balance: nil,
-            initial_balance: nil
+            decimal_final_balance: nil,
+            initial_balance: nil,
+            decimal_initial_balance: nil
 
   @typedoc """
   Type that represents `Numscriptex.Balance` struct.
@@ -17,14 +21,18 @@ defmodule Numscriptex.Balance do
   ## Fields
   * `:account` the account name
   * `:asset` the asset were the transaction was made
-  * `:final_balance` balance after the transactions
-  * `:initial_balance` balance before the transactions
+  * `:final_balance` balance after the transactions (integer)
+  * `:decimal_final_balance` balance after the transactions, but as float
+  * `:initial_balance` balance before the transactions (integer)
+  * `:decimal_initial_balance` balance after the transactions, but as float
   """
   @type t() :: %__MODULE__{
           account: bitstring(),
           asset: bitstring(),
-          final_balance: non_neg_integer(),
-          initial_balance: non_neg_integer()
+          final_balance: integer(),
+          decimal_final_balance: float(),
+          initial_balance: integer(),
+          decimal_initial_balance: float()
         }
 
   @doc """
@@ -57,19 +65,25 @@ defmodule Numscriptex.Balance do
       account: "foo",
       asset: "EUR/2",
       final_balance: 300,
-      initial_balance: 300
+      decimal_final_balance: 3.0,
+      initial_balance: 300,
+      decimal_initial_balance: 3.0
     },
     %Numscriptex.Balance{
       account: "foo",
       asset: "USD/2",
       final_balance: 400,
-      initial_balance: 500
+      decimal_final_balance: 4.0,
+      initial_balance: 500,
+      decimal_initial_balance: 5.0
     },
     %Numscriptex.Balance{
       account: "bar",
       asset: "USD/2",
       final_balance: 100,
-      initial_balance: 0
+      decimal_final_balance: 1.0,
+      initial_balance: 0,
+      decimal_initial_balance: 0.0
     }
   ]
   ```
@@ -82,9 +96,8 @@ defmodule Numscriptex.Balance do
     |> handle_initial_balance(account_assets)
     |> handle_final_balance(postings)
     |> maybe_drop_balance()
-    |> then(fn balances ->
-      Enum.map(balances, &struct(__MODULE__, &1))
-    end)
+    |> put_decimal_values()
+    |> Enum.map(&struct(__MODULE__, &1))
   end
 
   defp build_balances(account_assets, postings) do
@@ -100,8 +113,10 @@ defmodule Numscriptex.Balance do
         %{
           account: account,
           asset: asset,
+          final_balance: 0,
+          decimal_final_balance: 0,
           initial_balance: 0,
-          final_balance: 0
+          decimal_initial_balance: 0
         }
       end)
     end)
@@ -113,14 +128,18 @@ defmodule Numscriptex.Balance do
         %{
           account: posting["source"],
           asset: posting["asset"],
+          final_balance: 0,
+          decimal_final_balance: 0,
           initial_balance: 0,
-          final_balance: 0
+          decimal_initial_balance: 0
         },
         %{
           account: posting["destination"],
           asset: posting["asset"],
+          final_balance: 0,
+          decimal_final_balance: 0,
           initial_balance: 0,
-          final_balance: 0
+          decimal_initial_balance: 0
         }
       ]
     end)
@@ -175,6 +194,21 @@ defmodule Numscriptex.Balance do
   defp maybe_drop_balance(balances) do
     Enum.reject(balances, fn balance ->
       balance.initial_balance == 0 and balance.final_balance == 0
+    end)
+  end
+
+  defp put_decimal_values(balances) do
+    Enum.map(balances, fn
+      %{initial_balance: initial_balance, final_balance: final_balance} = balance ->
+        decimal_places = Utilities.decimal_places_from_asset(balance.asset)
+        decimal_initial_balance = Utilities.integer_to_decimal(initial_balance, decimal_places)
+        decimal_final_balance = Utilities.integer_to_decimal(final_balance, decimal_places)
+
+        %{
+          balance
+          | decimal_initial_balance: decimal_initial_balance,
+            decimal_final_balance: decimal_final_balance
+        }
     end)
   end
 end

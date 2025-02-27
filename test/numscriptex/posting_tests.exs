@@ -6,7 +6,7 @@ defmodule Numscriptex.PostingTest do
   doctest Numscriptex.Posting
 
   describe "from_map/1" do
-    setup_all do
+    setup do
       postings = [
         %{
           amount: 100,
@@ -18,7 +18,7 @@ defmodule Numscriptex.PostingTest do
           amount: 100,
           asset: "USD/2",
           destination: "baz",
-          source: "foo"
+          source: "bar"
         }
       ]
 
@@ -31,12 +31,14 @@ defmodule Numscriptex.PostingTest do
       assert postings == [
                %Numscriptex.Posting{
                  amount: 100,
+                 decimal_amount: 1.0,
                  asset: "USD/2",
                  destination: "bar",
                  source: "foo"
                },
                %Numscriptex.Posting{
                  amount: 100,
+                 decimal_amount: 1.0,
                  asset: "USD/2",
                  destination: "baz",
                  source: "bar"
@@ -49,6 +51,7 @@ defmodule Numscriptex.PostingTest do
 
       assert posting == %Numscriptex.Posting{
                amount: 100,
+               decimal_amount: 1.0,
                asset: "USD/2",
                destination: "bar",
                source: "foo"

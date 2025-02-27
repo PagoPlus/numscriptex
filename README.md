@@ -152,8 +152,9 @@ Where result will be something like this:
 ```elixir
 iex> %{
 ...>   postings: [
-  ...>           %Numscriptex.Posting{
+...>           %Numscriptex.Posting{
 ...>             amount: 100,
+...>             decimal_amount: 1.0,
 ...>             asset: "USD/2",
 ...>             destination: "bar",
 ...>             source: "foo"
@@ -164,19 +165,25 @@ iex> %{
 ...>             account: "foo",
 ...>             asset: "EUR/2",
 ...>             final_balance: 300,
-...>             initial_balance: 300
+...>             initial_balance: 300,
+...>             decimal_final_balance: 3.0,
+...>             decimal_initial_balance: 3.0,
 ...>           },
 ...>           %Numscriptex.Balance{
 ...>             account: "foo",
 ...>             asset: "USD/2",
 ...>             final_balance: 400,
-...>             initial_balance: 500
+...>             initial_balance: 500,
+...>             decimal_final_balance: 4.0,
+...>             decimal_initial_balance: 5.0,
 ...>           },
 ...>           %Numscriptex.Balance{
 ...>             account: "bar",
 ...>             asset: "USD/2",
 ...>             final_balance: 100,
-...>             initial_balance: 0
+...>             initial_balance: 0,
+...>             decimal_final_balance: 1.0,
+...>             decimal_initial_balance: 0.0,
 ...>           }
 ...>         ],
 ...>   accountMeta: %{}

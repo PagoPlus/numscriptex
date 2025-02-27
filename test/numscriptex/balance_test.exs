@@ -38,19 +38,25 @@ defmodule Numscriptex.BalanceTest do
           account: "bar",
           asset: "USD/2",
           final_balance: 50,
-          initial_balance: 0
+          decimal_final_balance: 0.5,
+          initial_balance: 0,
+          decimal_initial_balance: 0.0
         },
         %Numscriptex.Balance{
           account: "baz",
           asset: "USD/2",
           final_balance: 49,
-          initial_balance: 0
+          decimal_final_balance: 0.49,
+          initial_balance: 0,
+          decimal_initial_balance: 0.0
         },
         %Numscriptex.Balance{
           account: "foo",
           asset: "USD/2",
           final_balance: 1,
-          initial_balance: 100
+          initial_balance: 100,
+          decimal_final_balance: 0.01,
+          decimal_initial_balance: 1.0
         }
       ]
 
