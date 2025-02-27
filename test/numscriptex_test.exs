@@ -104,6 +104,7 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 100,
+                 decimal_amount: 1.0,
                  asset: "USD/2",
                  destination: "bar",
                  source: "foo"
@@ -115,19 +116,25 @@ defmodule NumscriptexTest do
                  account: "foo",
                  asset: "EUR/2",
                  final_balance: 300,
-                 initial_balance: 300
+                 initial_balance: 300,
+                 decimal_final_balance: 3.0,
+                 decimal_initial_balance: 3.0
                },
                %Numscriptex.Balance{
                  account: "foo",
                  asset: "USD/2",
                  final_balance: 400,
-                 initial_balance: 500
+                 initial_balance: 500,
+                 decimal_final_balance: 4.0,
+                 decimal_initial_balance: 5.0
                },
                %Numscriptex.Balance{
                  account: "bar",
                  asset: "USD/2",
                  final_balance: 100,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 1.0,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -156,12 +163,14 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 100,
+                 decimal_amount: 1.0,
                  asset: "USD/2",
                  destination: "bar",
                  source: "foo"
                },
                %Numscriptex.Posting{
                  amount: 100,
+                 decimal_amount: 1.0,
                  asset: "USD/2",
                  destination: "baz",
                  source: "bar"
@@ -173,13 +182,17 @@ defmodule NumscriptexTest do
                  account: "foo",
                  asset: "USD/2",
                  final_balance: 400,
-                 initial_balance: 500
+                 initial_balance: 500,
+                 decimal_final_balance: 4.0,
+                 decimal_initial_balance: 5.0
                },
                %Numscriptex.Balance{
                  account: "baz",
                  asset: "USD/2",
                  final_balance: 100,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 1.0,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -214,24 +227,28 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 5000,
+                 decimal_amount: 50.0,
                  asset: "USD/2",
                  destination: "orders:4567:payment",
                  source: "users:1234:main"
                },
                %Numscriptex.Posting{
                  amount: 1000,
+                 decimal_amount: 10.0,
                  asset: "USD/2",
                  destination: "orders:4567:payment",
                  source: "users:1234:vouchers:2024-01-31"
                },
                %Numscriptex.Posting{
                  amount: 3000,
+                 decimal_amount: 30.0,
                  asset: "USD/2",
                  destination: "orders:4567:payment",
                  source: "users:1234:vouchers:2024-02-17"
                },
                %Numscriptex.Posting{
                  amount: 1000,
+                 decimal_amount: 10.0,
                  asset: "USD/2",
                  destination: "orders:4567:payment",
                  source: "users:1234:vouchers:2024-03-22"
@@ -243,31 +260,41 @@ defmodule NumscriptexTest do
                  account: "users:1234:main",
                  asset: "USD/2",
                  final_balance: 0,
-                 initial_balance: 5000
+                 initial_balance: 5000,
+                 decimal_final_balance: 0.0,
+                 decimal_initial_balance: 50.0
                },
                %Numscriptex.Balance{
                  account: "users:1234:vouchers:2024-01-31",
                  asset: "USD/2",
                  final_balance: 0,
-                 initial_balance: 1000
+                 initial_balance: 1000,
+                 decimal_final_balance: 0.0,
+                 decimal_initial_balance: 10.0
                },
                %Numscriptex.Balance{
                  account: "users:1234:vouchers:2024-02-17",
                  asset: "USD/2",
                  final_balance: 0,
-                 initial_balance: 3000
+                 initial_balance: 3000,
+                 decimal_final_balance: 0.0,
+                 decimal_initial_balance: 30.0
                },
                %Numscriptex.Balance{
                  account: "users:1234:vouchers:2024-03-22",
                  asset: "USD/2",
                  final_balance: 9000,
-                 initial_balance: 10_000
+                 initial_balance: 10_000,
+                 decimal_final_balance: 90.0,
+                 decimal_initial_balance: 100.0
                },
                %Numscriptex.Balance{
                  account: "orders:4567:payment",
                  asset: "USD/2",
                  final_balance: 10_000,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 100.0,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -311,24 +338,28 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 2000,
+                 decimal_amount: 20.0,
                  asset: "USD/2",
                  destination: "payments:4567",
                  source: "coupons:FALL24"
                },
                %Numscriptex.Posting{
                  amount: 27_900,
+                 decimal_amount: 279.0,
                  asset: "USD/2",
                  destination: "payments:4567",
                  source: "users:1234"
                },
                %Numscriptex.Posting{
                  amount: 900,
+                 decimal_amount: 9.0,
                  asset: "USD/2",
                  destination: "payments:5678",
                  source: "coupons:FALL24"
                },
                %Numscriptex.Posting{
                  amount: 8100,
+                 decimal_amount: 81.0,
                  asset: "USD/2",
                  destination: "payments:5678",
                  source: "users:1234"
@@ -340,25 +371,33 @@ defmodule NumscriptexTest do
                  account: "coupons:FALL24",
                  asset: "USD/2",
                  final_balance: 97_000,
-                 initial_balance: 99_900
+                 initial_balance: 99_900,
+                 decimal_final_balance: 970.0,
+                 decimal_initial_balance: 999.0
                },
                %Numscriptex.Balance{
                  account: "users:1234",
                  asset: "USD/2",
                  final_balance: 64_000,
-                 initial_balance: 100_000
+                 initial_balance: 100_000,
+                 decimal_final_balance: 640.0,
+                 decimal_initial_balance: 1000.0
                },
                %Numscriptex.Balance{
                  account: "payments:4567",
                  asset: "USD/2",
                  final_balance: 29_900,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 299.0,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "payments:5678",
                  asset: "USD/2",
                  final_balance: 9000,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 90.0,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -385,12 +424,14 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 10,
+                 decimal_amount: 0.1,
                  asset: "USD/2",
                  destination: "platform:fees",
                  source: "orders:1234"
                },
                %Numscriptex.Posting{
                  amount: 90,
+                 decimal_amount: 0.9,
                  asset: "USD/2",
                  destination: "merchants:6789",
                  source: "orders:1234"
@@ -402,19 +443,25 @@ defmodule NumscriptexTest do
                  account: "orders:1234",
                  asset: "USD/2",
                  final_balance: 900,
-                 initial_balance: 1000
+                 initial_balance: 1000,
+                 decimal_final_balance: 9.0,
+                 decimal_initial_balance: 10.0
                },
                %Numscriptex.Balance{
                  account: "platform:fees",
                  asset: "USD/2",
                  final_balance: 10,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 0.1,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "merchants:6789",
                  asset: "USD/2",
                  final_balance: 90,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 0.9,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -448,24 +495,28 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 300,
+                 decimal_amount: 3.0,
                  asset: "USD/2",
                  destination: "platform:commission:sales_tax",
                  source: "orders:1234"
                },
                %Numscriptex.Posting{
                  amount: 1200,
+                 decimal_amount: 12.0,
                  asset: "USD/2",
                  destination: "platform:commission:revenue",
                  source: "orders:1234"
                },
                %Numscriptex.Posting{
                  amount: 500,
+                 decimal_amount: 5.0,
                  asset: "USD/2",
                  destination: "users:1234:cashback",
                  source: "orders:1234"
                },
                %Numscriptex.Posting{
                  amount: 8000,
+                 decimal_amount: 80.0,
                  asset: "USD/2",
                  destination: "merchants:6789",
                  source: "orders:1234"
@@ -477,31 +528,41 @@ defmodule NumscriptexTest do
                  account: "orders:1234",
                  asset: "USD/2",
                  final_balance: 0,
-                 initial_balance: 10_000
+                 initial_balance: 10_000,
+                 decimal_final_balance: 0.0,
+                 decimal_initial_balance: 100.0
                },
                %Numscriptex.Balance{
                  account: "platform:commission:sales_tax",
                  asset: "USD/2",
                  final_balance: 300,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 3.0,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "platform:commission:revenue",
                  asset: "USD/2",
                  final_balance: 1200,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 12.0,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "users:1234:cashback",
                  asset: "USD/2",
                  final_balance: 500,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 5.0,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "merchants:6789",
                  asset: "USD/2",
                  final_balance: 8000,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 80.0,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -525,6 +586,7 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 500,
+                 decimal_amount: 5.0,
                  asset: "USD/2",
                  destination: "payment",
                  source: "users:1234"
@@ -536,13 +598,17 @@ defmodule NumscriptexTest do
                  account: "users:1234",
                  asset: "USD/2",
                  final_balance: 0,
-                 initial_balance: 500
+                 initial_balance: 500,
+                 decimal_final_balance: 0.0,
+                 decimal_initial_balance: 5.0
                },
                %Numscriptex.Balance{
                  account: "payment",
                  asset: "USD/2",
                  final_balance: 500,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 5.0,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -574,18 +640,21 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 100,
+                 decimal_amount: 1.0,
                  asset: "USD/2",
                  destination: "payments:4567",
                  source: "users:1234"
                },
                %Numscriptex.Posting{
                  amount: 1000,
+                 decimal_amount: 10.0,
                  asset: "USD/2",
                  destination: "payments:4567",
                  source: "users:2345:credit"
                },
                %Numscriptex.Posting{
                  amount: 5000,
+                 decimal_amount: 50.0,
                  asset: "USD/2",
                  destination: "payments:4567",
                  source: "users:2345:main"
@@ -597,25 +666,33 @@ defmodule NumscriptexTest do
                  account: "users:2345:main",
                  asset: "USD/2",
                  final_balance: 0,
-                 initial_balance: 5000
+                 initial_balance: 5000,
+                 decimal_final_balance: 0.0,
+                 decimal_initial_balance: 50.0
                },
                %Numscriptex.Balance{
                  account: "users:1234",
                  asset: "USD/2",
                  final_balance: -100,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: -1.0,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "payments:4567",
                  asset: "USD/2",
                  final_balance: 6100,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 61.0,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "users:2345:credit",
                  asset: "USD/2",
                  final_balance: -1000,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: -10.0,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -642,6 +719,7 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 5,
+                 decimal_amount: 0.05,
                  asset: "USD/2",
                  destination: "platform:fees",
                  source: "users:1234"
@@ -653,13 +731,17 @@ defmodule NumscriptexTest do
                  account: "users:1234",
                  asset: "USD/2",
                  final_balance: 495,
-                 initial_balance: 500
+                 initial_balance: 500,
+                 decimal_final_balance: 4.95,
+                 decimal_initial_balance: 5.0
                },
                %Numscriptex.Balance{
                  account: "platform:fees",
                  asset: "USD/2",
                  final_balance: 5,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 0.05,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -695,19 +777,39 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 50,
+                 decimal_amount: 0.5,
                  asset: "USD/2",
                  destination: "bar",
                  source: "foo"
                },
                %Numscriptex.Posting{
                  amount: 49,
+                 decimal_amount: 0.49,
                  asset: "USD/2",
                  destination: "baz",
                  source: "foo"
                },
-               %Numscriptex.Posting{amount: 20, asset: "USD/2", destination: "b", source: "a"},
-               %Numscriptex.Posting{amount: 20, asset: "USD/2", destination: "c", source: "a"},
-               %Numscriptex.Posting{amount: 59, asset: "USD/2", destination: "d", source: "a"}
+               %Numscriptex.Posting{
+                 amount: 20,
+                 decimal_amount: 0.2,
+                 asset: "USD/2",
+                 destination: "b",
+                 source: "a"
+               },
+               %Numscriptex.Posting{
+                 amount: 20,
+                 decimal_amount: 0.2,
+                 asset: "USD/2",
+                 destination: "c",
+                 source: "a"
+               },
+               %Numscriptex.Posting{
+                 amount: 59,
+                 decimal_amount: 0.59,
+                 asset: "USD/2",
+                 destination: "d",
+                 source: "a"
+               }
              ]
 
       assert result.balances == [
@@ -715,43 +817,57 @@ defmodule NumscriptexTest do
                  account: "a",
                  asset: "USD/2",
                  final_balance: 901,
-                 initial_balance: 1000
+                 initial_balance: 1000,
+                 decimal_final_balance: 9.01,
+                 decimal_initial_balance: 10.0
                },
                %Numscriptex.Balance{
                  account: "foo",
                  asset: "USD/2",
                  final_balance: 901,
-                 initial_balance: 1000
+                 initial_balance: 1000,
+                 decimal_final_balance: 9.01,
+                 decimal_initial_balance: 10.0
                },
                %Numscriptex.Balance{
                  account: "bar",
                  asset: "USD/2",
                  final_balance: 50,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 0.5,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "baz",
                  asset: "USD/2",
                  final_balance: 49,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 0.49,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "b",
                  asset: "USD/2",
                  final_balance: 20,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 0.2,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "c",
                  asset: "USD/2",
                  final_balance: 20,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 0.2,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "d",
                  asset: "USD/2",
                  final_balance: 59,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 0.59,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -784,12 +900,14 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 20,
+                 decimal_amount: 0.2,
                  asset: "USD/2",
                  destination: "platform:tax",
                  source: "users:1234"
                },
                %Numscriptex.Posting{
                  amount: 80,
+                 decimal_amount: 0.8,
                  asset: "USD/2",
                  destination: "platform:revenue",
                  source: "users:1234"
@@ -801,19 +919,25 @@ defmodule NumscriptexTest do
                  account: "users:1234",
                  asset: "USD/2",
                  final_balance: 9900,
-                 initial_balance: 10_000
+                 initial_balance: 10_000,
+                 decimal_final_balance: 99.0,
+                 decimal_initial_balance: 100.0
                },
                %Numscriptex.Balance{
                  account: "platform:tax",
                  asset: "USD/2",
                  final_balance: 20,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 0.2,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "platform:revenue",
                  asset: "USD/2",
                  final_balance: 80,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 0.8,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -850,12 +974,14 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 150,
+                 decimal_amount: 1.5,
                  asset: "USD/2",
                  destination: "platform:fees",
                  source: "orders:2345"
                },
                %Numscriptex.Posting{
                  amount: 850,
+                 decimal_amount: 8.5,
                  asset: "USD/2",
                  destination: "merchants:1234",
                  source: "orders:2345"
@@ -867,19 +993,25 @@ defmodule NumscriptexTest do
                  account: "orders:2345",
                  asset: "USD/2",
                  final_balance: 0,
-                 initial_balance: 1000
+                 initial_balance: 1000,
+                 decimal_final_balance: 0.0,
+                 decimal_initial_balance: 10.0
                },
                %Numscriptex.Balance{
                  account: "platform:fees",
                  asset: "USD/2",
                  final_balance: 150,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 1.5,
+                 decimal_initial_balance: 0.0
                },
                %Numscriptex.Balance{
                  account: "merchants:1234",
                  asset: "USD/2",
                  final_balance: 850,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 8.5,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
@@ -900,6 +1032,7 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 1000,
+                 decimal_amount: 10.0,
                  asset: "USD/2",
                  destination: "user",
                  source: "user"
@@ -911,7 +1044,9 @@ defmodule NumscriptexTest do
                  account: "user",
                  asset: "USD/2",
                  final_balance: 1000,
-                 initial_balance: 1000
+                 initial_balance: 1000,
+                 decimal_final_balance: 10.0,
+                 decimal_initial_balance: 10.0
                }
              ]
     end
@@ -936,21 +1071,24 @@ defmodule NumscriptexTest do
       assert result.postings == [
                %Numscriptex.Posting{
                  amount: 620,
+                 decimal_amount: 6.2,
                  asset: "USD/2",
                  destination: "user",
                  source: "user"
                },
                %Numscriptex.Posting{
                  amount: 270,
+                 decimal_amount: 2.7,
                  asset: "USD/2",
                  destination: "user2",
                  source: "user"
                },
                %Numscriptex.Posting{
-                 source: "user",
-                 destination: "user3",
                  amount: 110,
-                 asset: "USD/2"
+                 decimal_amount: 1.1,
+                 asset: "USD/2",
+                 destination: "user3",
+                 source: "user"
                }
              ]
 
@@ -959,19 +1097,25 @@ defmodule NumscriptexTest do
                  account: "user",
                  asset: "USD/2",
                  final_balance: 620,
-                 initial_balance: 1000
+                 initial_balance: 1000,
+                 decimal_final_balance: 6.2,
+                 decimal_initial_balance: 10.0
                },
                %Numscriptex.Balance{
                  account: "user2",
                  asset: "USD/2",
                  final_balance: 1270,
-                 initial_balance: 1000
+                 initial_balance: 1000,
+                 decimal_final_balance: 12.7,
+                 decimal_initial_balance: 10.0
                },
                %Numscriptex.Balance{
                  account: "user3",
                  asset: "USD/2",
                  final_balance: 110,
-                 initial_balance: 0
+                 initial_balance: 0,
+                 decimal_final_balance: 1.1,
+                 decimal_initial_balance: 0.0
                }
              ]
     end
