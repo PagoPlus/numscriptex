@@ -50,10 +50,12 @@ defmodule Numscriptex.Builder do
     with {:ok, {port_splits, fixed_splits}} <- check_metadata(metadata) do
       remaining_dest = metadata[:remaining_to]
       asset = metadata[:percent_asset]
-      port_numscript = maybe_build_portioned_numscript(port_splits, remaining_dest, asset)
-      fixed_numscript = maybe_build_fixed_values_numscript(fixed_splits)
 
-      {:ok, %{script: port_numscript <> fixed_numscript}}
+      with {:ok, port_numscript} <-
+             maybe_build_portioned_numscript(port_splits, remaining_dest, asset),
+           {:ok, fixed_numscript} <- maybe_build_fixed_values_numscript(fixed_splits) do
+        {:ok, %{script: port_numscript <> fixed_numscript}}
+      end
     end
   end
 
@@ -96,85 +98,156 @@ defmodule Numscriptex.Builder do
   defp filter_fixed_splits([_split | tail], acc), do: filter_fixed_splits(tail, acc)
   defp filter_fixed_splits([], acc), do: acc
 
-  defp maybe_build_portioned_numscript([], _remaining_dest, _asset), do: ""
+  defp maybe_build_portioned_numscript([], _remaining_dest, _asset), do: {:ok, ""}
 
   defp maybe_build_portioned_numscript(metadata, remaining_dest, asset) do
-    initial = start_numscript(asset)
-
-    metadata
-    |> Enum.reduce(initial, fn data, acc -> acc <> build_numscript(data) end)
-    |> close_numscript(remaining_dest)
+    with {:ok, initial} <- start_numscript(asset) do
+      metadata
+      |> Enum.reduce_while(initial, fn data, acc -> handle_build(data, acc) end)
+      |> close_numscript(remaining_dest)
+    end
   end
 
-  defp maybe_build_fixed_values_numscript([]), do: ""
+  defp maybe_build_fixed_values_numscript([]), do: {:ok, ""}
 
   defp maybe_build_fixed_values_numscript(metadata) do
-    Enum.reduce(metadata, "", fn data, acc ->
-      acc <> build_numscript(data)
-    end)
+    metadata
+    |> Enum.reduce_while("", fn data, acc -> handle_build(data, acc) end)
+    |> case do
+      {:error, _reason} = error ->
+        error
+
+      script ->
+        {:ok, script}
+    end
   end
 
-  defp build_numscript(%{type: :percent, splits: [_ | _] = splits} = metadata) do
-    initial = start_portioned_dest(metadata.amount)
+  defp build_numscript(%{type: :percent, splits: splits} = metadata) when is_list(splits) do
+    initial = start_portioned_dest(metadata[:amount])
 
     splits
-    |> Enum.reduce(initial, fn
+    |> Enum.reduce_while(initial, fn
       %{type: :percent} = split, acc ->
-        acc <> build_numscript(split)
+        handle_build(split, acc)
 
       _split, acc ->
-        acc
+        {:cont, acc}
     end)
     |> close_portioned_dest(metadata[:remaining_to])
   end
 
   defp build_numscript(%{amount: amount, account: dest, type: type, asset: asset})
-       when type == :fixed do
-    """
-    send [#{asset} #{amount}] (
-      source = @user
-      destination = @#{dest}
-    )
-    """
+       when type == :fixed and
+              is_integer(amount) and
+              amount > 0 and
+              is_binary(dest) and
+              is_binary(asset) do
+    case {String.trim(asset), String.trim(dest)} do
+      {_, ""} ->
+        {:error, "Invalid destination."}
+
+      {"", _} ->
+        {:error, "Invalid asset."}
+
+      {asset, dest} ->
+        """
+        send [#{asset} #{amount}] (
+          source = @user
+          destination = @#{dest}
+        )
+        """
+    end
   end
 
-  defp build_numscript(%{amount: amount, account: dest, type: type}) when type == :percent do
-    """
-        #{amount}% to @#{dest}
-    """
+  defp build_numscript(%{amount: amount, account: dest, type: type})
+       when type == :percent and
+              is_integer(amount) and
+              amount > 0 and
+              amount <= 100 and
+              is_binary(dest) do
+    case String.trim(dest) do
+      "" ->
+        {:error, "Invalid destination."}
+
+      dest ->
+        """
+            #{amount}% to @#{dest}
+        """
+    end
   end
 
-  defp start_numscript(asset) do
-    """
-    send [#{asset} *] (
-      source = @user
-      destination = {
-    """
+  defp build_numscript(_metadata), do: {:error, "Invalid metadata."}
+
+  defp handle_build(split, acc) do
+    case build_numscript(split) do
+      {:error, _reason} = error ->
+        {:halt, error}
+
+      script ->
+        {:cont, acc <> script}
+    end
   end
 
-  defp start_portioned_dest(amount) do
+  defp start_numscript(asset) when is_binary(asset) do
+    case String.trim(asset) do
+      "" ->
+        {:error, "Invalid asset."}
+
+      asset ->
+        {:ok,
+         """
+         send [#{asset} *] (
+           source = @user
+           destination = {
+         """}
+    end
+  end
+
+  defp start_numscript(_asset), do: {:error, "Invalid asset."}
+
+  defp start_portioned_dest(amount) when is_integer(amount) and amount > 0 and amount <= 100 do
     """
         #{amount}% to {
     """
   end
 
+  defp start_portioned_dest(_amount), do: {:error, "Invalid amount."}
+
+  defp close_numscript({:error, _reason} = error, _remaining_dest), do: error
+
   defp close_numscript(script, nil) do
-    script <>
-      """
-          remaining kept
-        }
-      )
-      """
+    script =
+      script <>
+        """
+            remaining kept
+          }
+        )
+        """
+
+    {:ok, script}
   end
 
-  defp close_numscript(script, remaining_dest) do
-    script <>
-      """
-          remaining to @#{remaining_dest}
-        }
-      )
-      """
+  defp close_numscript(script, remaining_dest) when is_binary(remaining_dest) do
+    case String.trim(remaining_dest) do
+      "" ->
+        {:error, "Invalid remaining destination."}
+
+      remaining_dest ->
+        script =
+          script <>
+            """
+                remaining to @#{remaining_dest}
+              }
+            )
+            """
+
+        {:ok, script}
+    end
   end
+
+  defp close_numscript(_script, _remaining_dest), do: {:error, "Invalid remaining destination."}
+
+  defp close_portioned_dest({:error, _reason} = error, _remaining_dest), do: error
 
   defp close_portioned_dest(script, nil) do
     script <>
@@ -184,11 +257,20 @@ defmodule Numscriptex.Builder do
       """
   end
 
-  defp close_portioned_dest(script, remaining_dest) do
-    script <>
-      """
-            remaining to @#{remaining_dest}
-          }
-      """
+  defp close_portioned_dest(script, remaining_dest) when is_binary(remaining_dest) do
+    case String.trim(remaining_dest) do
+      "" ->
+        {:error, "Invalid remaining destination."}
+
+      remaining_dest ->
+        script <>
+          """
+                remaining to @#{remaining_dest}
+              }
+          """
+    end
   end
+
+  defp close_portioned_dest(_script, _remaining_dest),
+    do: {:error, "Invalid remaining destination."}
 end
