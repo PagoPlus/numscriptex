@@ -41,7 +41,7 @@ These above are the default values.
 You can build Numscripts dynamically with `Numscriptex.Builder.build/1`, check if your script is valid with `Numscriptex.check/1`,
 and last but not least, you can run your script with `Numscriptex.run/2`.
 
-You can read more about the `Numscriptex.Builder` module and how to use it on its [guide](https://github.com/PagoPlus/numscriptex/blob/main/guides/builder.md)
+You can read more about the `Numscriptex.Builder` module and how to use it on its [guide](https://hexdocs.pm/numscriptex/builder-introduction.html)
 
 And before introducing the other two functions, you will need to know what is the `Numscriptex.Run` struct.
 
@@ -194,4 +194,4 @@ iex> %{
 ## License
 Copyright (c) 2025 MedFlow
 
-This library is MIT licensed. See the [LICENSE](https://github.com/PagoPlus/numscriptex/blob/main/LINCESE) for details.
+This library is MIT licensed. See the [LICENSE](https://github.com/PagoPlus/numscriptex/blob/main/LICENSE) for details.

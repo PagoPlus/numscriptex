@@ -43,7 +43,7 @@ defmodule Numscriptex.Builder do
   {:ok, %{script: "send [BRL/2 500] (\n  source = @user\n  destination = @some:destination\n)\n"}}
   ```
 
-  If you want to learn more about this feature you can check its guide [here](https://github.com/PagoPlus/numscriptex/blob/main/guides/builder.md)
+  If you want to learn more about this feature you can check its guide [here](https://hexdocs.pm/numscriptex/builder-introduction.html)
   """
   @spec build(metadata()) :: {:ok, %{script: bitstring()}} | {:error, bitstring()}
   def build(%{splits: _splits} = metadata) do
