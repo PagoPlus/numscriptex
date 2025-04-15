@@ -513,7 +513,7 @@ defmodule Numscriptex.BuilderTest do
       assert {:error, "Invalid metadata."} = Builder.build(metadata)
     end
 
-    test "returns error when fixed split has zero amount" do
+    test "returns error when fixed split amount is not a number" do
       metadata = %{
         splits: [
           %{
