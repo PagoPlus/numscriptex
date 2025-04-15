@@ -232,6 +232,45 @@ defmodule Numscriptex.BuilderTest do
              """
     end
 
+    test "ignores splits when is empty" do
+      metadata = %{
+        splits: [
+          %{
+            type: :percent,
+            amount: 50,
+            account: "ignored:account",
+            remaining_to: "remaining:destination",
+            splits: [
+              %{
+                type: :percent,
+                amount: 20,
+                account: "some:destination",
+                splits: []
+              }
+            ]
+          }
+        ],
+        percent_asset: "EUR",
+        remaining_to: "remaining:destination:a"
+      }
+
+      assert {:ok, %{script: script}} = Builder.build(metadata)
+      assert {:ok, _script} = Numscriptex.check(script)
+
+      assert script == """
+             send [EUR *] (
+               source = @user
+               destination = {
+                 50% to {
+                 20% to @some:destination
+                   remaining to @remaining:destination
+                 }
+                 remaining to @remaining:destination:a
+               }
+             )
+             """
+    end
+
     test "if missing remaining_to, default to 'remaining kept'" do
       metadata = %{
         splits: [

@@ -122,7 +122,7 @@ defmodule Numscriptex.Builder do
     end
   end
 
-  defp build_numscript(%{type: :percent, splits: splits} = metadata) when is_list(splits) do
+  defp build_numscript(%{type: :percent, splits: [_ | _] = splits} = metadata) do
     initial = start_portioned_dest(metadata[:amount])
 
     splits
