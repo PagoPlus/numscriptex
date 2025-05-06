@@ -10,10 +10,11 @@ defmodule Numscriptex.AssetsManager do
   @retries Application.compile_env(:numscriptex, :retries, 3)
   @numscript_checksums_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@numscript_wasm_version}/numscript_checksums.txt"
   @numscript_wasm_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@numscript_wasm_version}/numscript.wasm"
-  @binary_path :numscriptex
-               |> :code.priv_dir()
-               |> Path.join("numscript.wasm")
-               |> to_charlist()
+
+  @default_binary_path :numscriptex
+                       |> :code.priv_dir()
+                       |> Path.join("numscript.wasm")
+                       |> to_charlist()
 
   defmacro ensure_wasm_binary_is_valid do
     quote do
@@ -21,7 +22,7 @@ defmodule Numscriptex.AssetsManager do
 
       File.mkdir_p!(:code.priv_dir(:numscriptex))
 
-      if File.exists?(unquote(@binary_path)) do
+      if File.exists?(unquote(binary_path())) do
         unquote(maybe_retry_download(compare_checksums()))
       else
         unquote(maybe_retry_download(download_and_compare_binary()))
@@ -29,7 +30,15 @@ defmodule Numscriptex.AssetsManager do
     end
   end
 
-  def binary_path, do: @binary_path
+  def binary_path do
+    path = Application.get_env(:numscriptex, :binary_path, @default_binary_path)
+
+    if !is_nil(path) && path != "" do
+      to_charlist(path)
+    else
+      @default_binary_path
+    end
+  end
 
   def hash_wasm_binary do
     # Logic explanation:
@@ -42,7 +51,7 @@ defmodule Numscriptex.AssetsManager do
     #   3. Uses `:crypto.hash_final/1` to finalize the streaming hash calculation;
     #   4. Encode the hash to the hexadecimal base (also the same as the checksums).
     quote do
-      File.stream!(unquote(@binary_path), 1024)
+      File.stream!(unquote(binary_path()), 1024)
       |> Enum.reduce(:crypto.hash_init(:sha256), fn line, acc ->
         :crypto.hash_update(acc, line)
       end)
@@ -124,7 +133,7 @@ defmodule Numscriptex.AssetsManager do
           :get,
           {unquote(@numscript_wasm_url), []},
           [],
-          stream: unquote(@binary_path)
+          stream: unquote(binary_path())
         )
 
       case request do
@@ -138,7 +147,7 @@ defmodule Numscriptex.AssetsManager do
 
         {:error, reason} ->
           Logger.error(
-            "Failed to download Numscript-WASM binary. Reason: #{inspect(reason)}. Binary path: #{unquote(@binary_path)}"
+            "Failed to download Numscript-WASM binary. Reason: #{inspect(reason)}. Binary path: #{unquote(binary_path())}"
           )
 
           raise CompileError
@@ -148,7 +157,7 @@ defmodule Numscriptex.AssetsManager do
 
   defp maybe_delete_wasm_binary do
     quote do
-      case File.rm(unquote(@binary_path)) do
+      case File.rm(unquote(binary_path())) do
         :ok ->
           :ok
 

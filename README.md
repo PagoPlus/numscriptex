@@ -28,10 +28,12 @@ and you can override the default version.
 Available configurations:
 - `:version` the binary release version to use (see [numscript-wasm releases](https://github.com/PagoPlus/numscript-wasm/releases/)).
 - `:retries` number of times to retry the download in case of a network failure.
+- `:binary_path` where the WASM binary file will be downloaded
 
 Ex:
 ```elixir
 config :numscriptex,
+       binary_path: :numscriptex |> :code.priv_dir() |> Path.join("numscript.wasm")
        version: "0.0.2",
        retries: 3
 ```

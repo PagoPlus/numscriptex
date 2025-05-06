@@ -61,5 +61,17 @@ defmodule Numscriptex.AssetsManagerTest do
 
       File.copy!(dest_path, binary_path)
     end
+
+    test "uses custom binary path when configured" do
+      new_binary_path = System.tmp_dir() |> Path.join("test_binary.wasm") |> to_charlist()
+
+      refute AssetsManager.binary_path() == new_binary_path
+
+      Application.put_env(:numscriptex, :binary_path, new_binary_path)
+
+      assert AssetsManager.binary_path() == new_binary_path
+
+      on_exit(fn -> Application.delete_env(:numscriptex, :binary_path) end)
+    end
   end
 end
