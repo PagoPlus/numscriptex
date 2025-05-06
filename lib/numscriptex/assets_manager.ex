@@ -10,9 +10,13 @@ defmodule Numscriptex.AssetsManager do
   @retries Application.compile_env(:numscriptex, :retries, 3)
   @numscript_checksums_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@numscript_wasm_version}/numscript_checksums.txt"
   @numscript_wasm_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@numscript_wasm_version}/numscript.wasm"
-  @binary_path :numscriptex
-               |> :code.priv_dir()
-               |> Path.join("numscript.wasm")
+
+  @default_binary_path :numscriptex
+                       |> :code.priv_dir()
+                       |> Path.join("numscript.wasm")
+                       |> to_charlist()
+
+  @binary_path Application.compile_env(:numscriptex, :binary_path, @default_binary_path)
                |> to_charlist()
 
   defmacro ensure_wasm_binary_is_valid do
@@ -29,7 +33,9 @@ defmodule Numscriptex.AssetsManager do
     end
   end
 
-  def binary_path, do: @binary_path
+  def binary_path do
+    Application.get_env(:numscriptex, :binary_path, @default_binary_path)
+  end
 
   def hash_wasm_binary do
     # Logic explanation:
