@@ -33,7 +33,11 @@ defmodule Numscriptex.AssetsManager do
   def binary_path do
     path = Application.get_env(:numscriptex, :binary_path, @default_binary_path)
 
-    if path, do: to_charlist(path), else: @default_binary_path
+    if !is_nil(path) && path != "" do
+      to_charlist(path)
+    else
+      @default_binary_path
+    end
   end
 
   def hash_wasm_binary do
