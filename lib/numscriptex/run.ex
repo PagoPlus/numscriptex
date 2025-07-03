@@ -30,7 +30,6 @@ defmodule Numscriptex.Run do
     experimental-asset-colors
   )
 
-  # TODO: Trocar o link pra doc de metadata e variables, esses tão desatualizados e não funcionam mais.
   @typedoc """
   Type that represents `Numscriptex.Run` struct.
 
@@ -55,7 +54,8 @@ defmodule Numscriptex.Run do
   %Numscriptex.Run{
     variables: %{},
     balances: %{},
-    metadata: %{}
+    metadata: %{},
+    featureFlags: %{}
   }
   ```
   """
@@ -75,7 +75,8 @@ defmodule Numscriptex.Run do
     %Numscriptex.Run{
       balances: %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}},
       variables: %{},
-      metadata: %{}
+      metadata: %{},
+      featureflags: %{}
     }
   }
   ```
