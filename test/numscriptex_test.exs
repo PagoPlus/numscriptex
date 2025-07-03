@@ -75,10 +75,10 @@ defmodule NumscriptexTest do
           has_errors? = Map.has_key?(result.details, :errors)
 
           refute has_errors?
+
         _ ->
           assert {:error, %{reason: :unsupported_version}} = Numscriptex.check(warning_script)
       end
-
     end
 
     test "with invalid script", %{script: script} do
@@ -90,11 +90,11 @@ defmodule NumscriptexTest do
           assert [error | _errors] = reason.errors
 
           assert error == %CheckLog{
-                  character: 0,
-                  level: :error,
-                  line: 0,
-                  message: "The function 'vers' does not exist"
-                }
+                   character: 0,
+                   level: :error,
+                   line: 0,
+                   message: "The function 'vers' does not exist"
+                 }
 
         _ ->
           assert {:error, %{reason: :unsupported_version}} = Numscriptex.check(error_script)
@@ -1182,7 +1182,13 @@ defmodule NumscriptexTest do
       """
 
       balances = %{"bar" => %{"USD/2" => 500, "EUR/2" => 300}}
-      feature_flags = %{"experimental-oneof" => true, "experimental-get-amount-function" => true, "experimental-mid-script-function-call" => true}
+
+      feature_flags = %{
+        "experimental-oneof" => true,
+        "experimental-get-amount-function" => true,
+        "experimental-mid-script-function-call" => true
+      }
+
       metadata = %{}
       variables = %{}
 
