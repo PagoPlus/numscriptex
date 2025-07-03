@@ -2,105 +2,8 @@ defmodule NumscriptexTest do
   use ExUnit.Case, async: false
 
   alias Numscriptex.AssetsManager
-  alias Numscriptex.CheckLog
 
   doctest Numscriptex
-
-  describe "check/1" do
-    setup do
-      script = """
-      vars {
-        account $order
-        account $merchant = meta($order, "merchant")
-        portion $commission = meta($merchant, "commission")
-      }
-
-      send [USD/2 *] (
-        source = $order
-        destination = {
-          $commission to @platform:fees
-          remaining to $merchant
-        }
-      )
-      """
-
-      warning_script = """
-      vars {
-        account $unused
-        account $order
-        account $merchant = meta($order, "merchant")
-        portion $commission = meta($merchant, "commission")
-      }
-
-      send [USD/2 *] (
-        source = $order
-        destination = {
-          $commission to @platform:fees
-          remaining to $merchant
-        }
-      )
-      """
-
-      {:ok, %{script: script, warning_script: warning_script}}
-    end
-
-    test "with valid script", %{script: script} do
-      case Numscriptex.version() do
-        %{numscript_wasm: "v0.2.0", numscriptex: _} ->
-          assert {:ok, result} = Numscriptex.check(script)
-          assert result.script == script
-
-        _ ->
-          assert {:error, %{reason: :unsupported_version}} = Numscriptex.check(script)
-      end
-    end
-
-    test "with valid script, but unused var", %{warning_script: warning_script} do
-      case Numscriptex.version() do
-        %{numscript_wasm: "v0.2.0"} ->
-          assert {:ok, result} = Numscriptex.check(warning_script)
-          assert result.script == warning_script
-
-          assert result.details == %{
-                   warnings: [
-                     %CheckLog{
-                       character: 10,
-                       level: :warning,
-                       line: 1,
-                       message: "The variable '$unused' is never used"
-                     }
-                   ]
-                 }
-
-          has_errors? = Map.has_key?(result.details, :errors)
-
-          refute has_errors?
-
-        _ ->
-          assert {:error, %{reason: :unsupported_version}} = Numscriptex.check(warning_script)
-      end
-    end
-
-    test "with invalid script", %{script: script} do
-      error_script = String.replace(script, "a", "e")
-
-      case Numscriptex.version() do
-        %{numscript_wasm: "v0.2.0"} ->
-          assert {:error, %{reason: reason}} = Numscriptex.check(error_script)
-          assert [error | _errors] = reason.errors
-
-          assert error == %CheckLog{
-                   character: 0,
-                   level: :error,
-                   line: 0,
-                   message: "The function 'vers' does not exist"
-                 }
-
-        _ ->
-          assert {:error, %{reason: :unsupported_version}} = Numscriptex.check(error_script)
-      end
-    end
-  end
 
   describe "run/2" do
     test "simple send" do
@@ -1183,11 +1086,11 @@ defmodule NumscriptexTest do
 
       balances = %{"bar" => %{"USD/2" => 500, "EUR/2" => 300}}
 
-      feature_flags = %{
-        "experimental-oneof" => true,
-        "experimental-get-amount-function" => true,
-        "experimental-mid-script-function-call" => true
-      }
+      feature_flags = [
+        :experimental_oneof,
+        :experimental_get_amount_function,
+        :experimental_mid_script_function_call
+      ]
 
       metadata = %{}
       variables = %{}
@@ -1306,14 +1209,6 @@ defmodule NumscriptexTest do
     end
   end
 
-  defp build_run_struct(balances, metadata, variables, feature_flags \\ %{}) do
-    %Numscriptex.Run{}
-    |> Numscriptex.Run.put!(:balances, balances)
-    |> Numscriptex.Run.put!(:metadata, metadata)
-    |> Numscriptex.Run.put!(:variables, variables)
-    |> Numscriptex.Run.put!(:featureFlags, feature_flags)
-  end
-
   describe "version/0" do
     setup do
       numscriptex_version =
@@ -1352,5 +1247,13 @@ defmodule NumscriptexTest do
 
       File.copy!(dest_path, wasm_binary_path)
     end
+  end
+
+  defp build_run_struct(balances, metadata, variables, feature_flags \\ []) do
+    %Numscriptex.Run{}
+    |> Numscriptex.Run.put!(:balances, balances)
+    |> Numscriptex.Run.put!(:metadata, metadata)
+    |> Numscriptex.Run.put!(:variables, variables)
+    |> Numscriptex.Run.put!(:feature_flags, feature_flags)
   end
 end

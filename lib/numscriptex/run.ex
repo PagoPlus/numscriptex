@@ -9,7 +9,7 @@ defmodule Numscriptex.Run do
   defstruct variables: %{},
             balances: %{},
             metadata: %{},
-            featureFlags: %{}
+            feature_flags: []
 
   alias Numscriptex.Utilities
 
@@ -17,18 +17,18 @@ defmodule Numscriptex.Run do
     variables
     balances
     metadata
-    featureFlags
+    feature_flags
   )a
 
   @valid_feature_flags ~w(
-    experimental-overdraft-function
-    experimental-get-asset-function
-    experimental-get-amount-function
-    experimental-oneof
-    experimental-account-interpolation
-    experimental-mid-script-function-call
-    experimental-asset-colors
-  )
+    experimental_overdraft_function
+    experimental_get_asset_function
+    experimental_get_amount_function
+    experimental_oneof
+    experimental_account_interpolation
+    experimental_mid_script_function_call
+    experimental_asset_colors
+  )a
 
   @typedoc """
   Type that represents `Numscriptex.Run` struct.
@@ -37,13 +37,13 @@ defmodule Numscriptex.Run do
   * `:balances` a map with account's assets balances
   * `:metadata` [metadata variables](https://docs.formance.com/modules/numscript/reference/metadata)
   * `:variables` [variables](https://docs.formance.com/modules/numscript/reference/variables)
-  * `:featureFlags` feature flags used to enable experimental features
+  * `:feature_flags` a list of feature flags used to enable experimental features
   """
   @type t() :: %__MODULE__{
           variables: map(),
           balances: map(),
           metadata: map(),
-          featureFlags: map()
+          feature_flags: list()
         }
 
   @doc """
@@ -55,7 +55,7 @@ defmodule Numscriptex.Run do
     variables: %{},
     balances: %{},
     metadata: %{},
-    featureFlags: %{}
+    feature_flags: []
   }
   ```
   """
@@ -76,7 +76,7 @@ defmodule Numscriptex.Run do
       balances: %{"foo" => %{"USD/2" => 500, "EUR/2" => 300}},
       variables: %{},
       metadata: %{},
-      featureFlags: %{}
+      feature_flags: []
     }
   }
   ```
@@ -91,25 +91,28 @@ defmodule Numscriptex.Run do
   ```
   """
   @spec put(t(), atom(), map()) :: {:ok, t()} | {:error, atom(), map()}
-  def put(run_struct, field, value \\ %{})
+  def put(run_struct, field, value)
 
   def put(_run_struct, field, _value) when field not in @valid_fields,
     do: {:error, :invalid_field, %{details: "The field '#{field}' does not exists."}}
 
-  def put(_run_struct, _field, value) when not is_map(value),
-    do: {:error, :invalid_value, %{details: "Argument `value` must be a map."}}
+  def put(_run_struct, :feature_flags, value) when not is_list(value),
+    do:
+      {:error, :invalid_value,
+       %{details: "Argument `value` for field `feature_flags` must be a list."}}
 
-  def put(%__MODULE__{} = run_struct, :featureFlags, value) do
-    invalid_flags =
-      value
-      |> Map.keys()
-      |> Enum.filter(fn flag -> flag not in @valid_feature_flags end)
+  def put(_run_struct, field, value) when field != :feature_flags and not is_map(value),
+    do:
+      {:error, :invalid_value, %{details: "Argument `value` for field `#{field}` must be a map."}}
+
+  def put(%__MODULE__{} = run_struct, :feature_flags, flags) do
+    invalid_flags = Enum.filter(flags, &(&1 not in @valid_feature_flags))
 
     if invalid_flags == [] do
-      {:ok, Map.replace(run_struct, :featureFlags, value)}
+      {:ok, Map.replace(run_struct, :feature_flags, flags)}
     else
       err_msg =
-        "The feature flag(s). See `Numscriptex.Run.list_available_feature_flags/0` for a list of valid feature flags."
+        "Invalid feature flag(s). See `Numscriptex.Run.list_available_feature_flags/0` for a list of valid feature flags."
 
       {:error, :invalid_value, %{details: err_msg}}
     end
@@ -131,7 +134,7 @@ defmodule Numscriptex.Run do
   ...> balances =  [%{"foo" => %{"USD/2" => 500, "EUR/2" => 300}}]
   ...>
   ...> Numscriptex.Run.put!(struct, :balances, balances)
-  ** (ArgumentError) Argument `value` must be a map.
+  ** (ArgumentError) Argument `value` for field `balances` must be a map.
   ```
   """
   @spec put!(t(), atom(), map()) :: t() | no_return()
@@ -146,14 +149,14 @@ defmodule Numscriptex.Run do
   end
 
   @doc """
-  Normalizes the feature flags in the `Numscriptex.Run` struct.
+  Normalizes the `Numscriptex.Run` struct to a map.
 
   ```elixir
   iex> struct =
-  ...>   Numscriptex.Run.put!(Numscriptex.Run.new(), :featureFlags, %{"experimental-overdraft-function" => true})
+  ...>   Numscriptex.Run.put!(Numscriptex.Run.new(), :feature_flags, [:experimental_overdraft_function])
   ...>
-  ...> Numscriptex.Run.normalize_feature_flags(struct)
-  %Numscriptex.Run{
+  ...> Numscriptex.Run.normalize_to_map(struct)
+  %{
     balances: %{},
     metadata: %{},
     variables: %{},
@@ -161,15 +164,29 @@ defmodule Numscriptex.Run do
   }
   ```
   """
-  @spec normalize_feature_flags(__MODULE__.t()) :: __MODULE__.t()
-  def normalize_feature_flags(%__MODULE__{} = run_input) do
-    feature_flags =
-      run_input
-      |> Map.get(:featureFlags, %{})
-      |> Enum.map(fn {key, _value} -> {key, %{}} end)
-      |> Enum.into(%{})
+  @spec normalize_to_map(__MODULE__.t()) :: map()
+  def normalize_to_map(%__MODULE__{} = run_input) do
+    feature_flags = normalize_feature_flags(run_input)
 
-    %{run_input | featureFlags: feature_flags}
+    run_input
+    |> Map.from_struct()
+    |> Map.delete(:feature_flags)
+    |> Map.put(:featureFlags, feature_flags)
+  end
+
+  defp normalize_feature_flags(run_input) do
+    stringified_flags =
+      run_input
+      |> Map.get(:feature_flags, [])
+      |> Enum.map(fn flag ->
+        flag
+        |> to_string()
+        |> String.replace("_", "-")
+      end)
+
+    stringified_flags
+    |> Enum.map(fn flag -> {flag, %{}} end)
+    |> Enum.into(%{})
   end
 
   @doc """
@@ -177,16 +194,16 @@ defmodule Numscriptex.Run do
   ```elixir
   iex> Numscriptex.Run.list_available_feature_flags()
   [
-    "experimental-overdraft-function",
-    "experimental-get-asset-function",
-    "experimental-get-amount-function",
-    "experimental-oneof",
-    "experimental-account-interpolation",
-    "experimental-mid-script-function-call",
-    "experimental-asset-colors"
+    :experimental_overdraft_function,
+    :experimental_get_asset_function,
+    :experimental_get_amount_function,
+    :experimental_oneof,
+    :experimental_account_interpolation,
+    :experimental_mid_script_function_call,
+    :experimental_asset_colors
   ]
   ```
   """
-  @spec list_available_feature_flags() :: list(String.t())
+  @spec list_available_feature_flags() :: list(atom())
   def list_available_feature_flags, do: @valid_feature_flags
 end

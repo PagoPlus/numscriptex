@@ -2,7 +2,7 @@
 [![Hex Version](https://img.shields.io/hexpm/v/numscriptex.svg)](https://hex.pm/packages/numscriptex)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/numscriptex/)
 
-NumscriptEx is a library that allows its users to check and run Numscripts in Elixir. If this is your first time hearing about
+NumscriptEx is a library that allows its users to run Numscripts in Elixir. If this is your first time hearing about
 Numscripts, here is a quick explanation:
 
 [Numscript](https://docs.formance.com/numscript/) is a DSL made by [Formance](https://www.formance.com/)
@@ -40,8 +40,7 @@ config :numscriptex,
 These above are the default values.
 
 ## Usage
-You can build Numscripts dynamically with `Numscriptex.Builder.build/1`, check if your script is valid with `Numscriptex.check/1`,
-and last but not least, you can run your script with `Numscriptex.run/2`.
+You can build Numscripts dynamically with `Numscriptex.Builder.build/1` and run your script with `Numscriptex.run/2`.
 
 You can read more about the `Numscriptex.Builder` module and how to use it on its [guide](https://hexdocs.pm/numscriptex/builder-introduction.html)
 
@@ -60,20 +59,20 @@ iex>  %Numscriptex.Run{
 ...>    balances: %{},
 ...>    metadata: %{},
 ...>    variables: %{},
-...>    featureFlags: %{}
+...>    feature_flags: []
 ...>  }
 ```
 Where:
 - `:balances` a map with the account's assets balances.
 - `:metadata` [metada variables](https://docs.formance.com/modules/numscript/reference/metadata);
 - `:variables` [variables](https://docs.formance.com/modules/numscript/reference/variables).
-- `:featureFlags` feature flags that enables numscript experimental features.
+- `:feature_flags` feature flags that enables numscript experimental features.
 
 And to create a new struct, you can use the `Numscriptex.Run.put/3` or `Numscriptex.Run.put!/3` functions. Ex:
 ```elixir
 iex>  variables = %{"order" => "orders:2345"}
 ...>  balances = %{"orders:2345" => %{"USD/2" => 1000}}
-...>  feature_flags = %{"experimental-oneof" => true}
+...>  feature_flags = [:experimental_oneof]
 ...>  metadata = %{
 ...>    "merchants:1234" => %{"commission" => "15%"},
 ...>    "orders:2345" => %{"merchant" => "merchants:1234"}
@@ -83,7 +82,7 @@ iex>  variables = %{"order" => "orders:2345"}
 ...>  |> Numscriptex.Run.put!(:balances, balances)
 ...>  |> Numscriptex.Run.put!(:metadata, metadata)
 ...>  |> Numscriptex.Run.put!(:variables, variables)
-...>  |> Numscriptex.Run.put!(:featureFlags, feature_flags)
+...>  |> Numscriptex.Run.put!(:feature_flags, feature_flags)
 ```
 
 Will return:
@@ -92,7 +91,7 @@ Will return:
 iex> %Numscriptex.Run{
 ...>   variables: %{"orders:2345" => %{"USD/2" => 1000}},
 ...>   balances: %{"order" => "orders:2345"},
-...>   featureFlags: {"experimental-oneof" => true},
+...>   feature_flags: [:experimental_oneof]
 ...>   metadata: %{
 ...>     "merchants:1234" => %{"commission" => "15%"},
 ...>     "orders:2345" => %{"merchant" => "merchants:1234"}
@@ -102,55 +101,8 @@ iex> %Numscriptex.Run{
 
 Kindly reminder: you will always need a valid `Numscriptex.Run` struct to successfully execute your scripts.
 
-### Check
-**WARNING:** this feature is deprecated and only works if your numscript-wasm binary version is 0.0.2!!
-
-To use `Numscriptex.check/1` you just have to pass your numscript as it's argument. Ex:
-
-```elixir
-iex>  "tmp/script.num"
-...>  |> File.read!()
-...>  |> Numscriptex.check()
-{:ok, %{script: script}
-```
-
-You don´t need to necessarily read from a file, as long as it is a string it's fine.
-
-Sometimes, even if your script is valid, it could also return some warnings, infos or hints inside the map.
-Ex:
-```elixir
-iex> {:ok, %{
-...>     script: "your numscript here",
-...>     warnings: [
-...>             %CheckLog{
-...>               character: 10,
-...>               level: :warning,
-...>               line: 1,
-...>               message: "warning message"
-...>             }
-...>           ],
-...>     hints: [
-...>             %CheckLog{
-...>               character: 2,
-...>               level: :hint,
-...>               line: 7,
-...>               message: "hint message"
-...>             }
-...>           ],
-...>     infos: [
-...>             %CheckLog{
-...>               character: 9,
-...>               level: :info,
-...>               line: 14,
-...>               message: "info message"
-...>             }
-...>           ]
-...>   }
-...> }
-```
-The `:script` is the only field that will always return if your script is valid, the other three are optional.
 ### Run
-To use `Numscriptex.run/2` your first argument must be your script (the same you used in `Numscriptex.check/1`), and the second must be the `%Numscriptex.Run{}` struct. Ex:
+To use `Numscriptex.run/2` you must pass your script as the first argument, and the `%Numscriptex.Run{}` struct as the second. Ex:
 
 ```elixir
 iex>  Numscriptex.run(script, struct)
