@@ -6,7 +6,7 @@ defmodule Numscriptex.AssetsManager do
   """
 
   Module.register_attribute(__MODULE__, :numscript_wasm_version, persist: true)
-  @numscript_wasm_version Application.compile_env(:numscriptex, :version, "0.0.2")
+  @numscript_wasm_version Application.compile_env(:numscriptex, :version, "0.1.0")
   @retries Application.compile_env(:numscriptex, :retries, 3)
   @numscript_checksums_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@numscript_wasm_version}/numscript_checksums.txt"
   @numscript_wasm_url "https://github.com/PagoPlus/numscript-wasm/releases/download/v#{@numscript_wasm_version}/numscript.wasm"

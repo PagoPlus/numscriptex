@@ -1,28 +1,18 @@
 defmodule Numscriptex do
   @moduledoc """
-  NumscriptEx is a library that allows its users to check and run [Numscripts](https://docs.formance.com/numscript/)
+  NumscriptEx is a library that allows its users to run [Numscripts](https://docs.formance.com/numscript/)
   via Elixir.
-
-  Want to check if your script is valid and ready to go? Use the `check/1` function.
-  Already checked the script and want to execute him? Use the `run/2` function.
   """
 
   alias Numscriptex.AssetsManager
   alias Numscriptex.Balance
-  alias Numscriptex.CheckLog
   alias Numscriptex.Posting
+  alias Numscriptex.Run
   alias Numscriptex.Utilities
 
   require AssetsManager
 
   AssetsManager.ensure_wasm_binary_is_valid()
-
-  @type check_result() :: %{
-          required(:script) => binary(),
-          optional(:hints) => list(CheckLog.t()),
-          optional(:infos) => list(CheckLog.t()),
-          optional(:warnings) => list(CheckLog.t())
-        }
 
   @type run_result() :: %{
           required(:balances) => list(Balance.t()),
@@ -32,7 +22,7 @@ defmodule Numscriptex do
         }
 
   @type errors() :: %{
-          required(:reason) => list(CheckLog.t()) | any(),
+          required(:reason) => any(),
           optional(:details) => any()
         }
 
@@ -41,7 +31,7 @@ defmodule Numscriptex do
 
   ```elixir
   iex> Numscriptex.version()
-  %{numscriptex: "v0.2.5", numscript_wasm: "v0.0.2"}
+  %{numscriptex: "v0.2.5", numscript_wasm: "v0.1.0"}
   ```
   """
   @spec version() :: %{numscriptex: binary(), numscript_wasm: binary()}
@@ -58,32 +48,6 @@ defmodule Numscriptex do
 
       {:error, _reason} ->
         %{numscript_wasm: "unknown", numscriptex: numscriptex_version}
-    end
-  end
-
-  @doc """
-  To use `check/1` you just need to pass your numscript as its argument.
-  Ex:
-
-  ```elixir
-  iex> script = "send [USD/2 100] (source = @foo destination = @bar)"
-  iex> Numscriptex.check(script)
-  {:ok, %{script: script}}
-  ```
-
-  It could also return some warnings, infos or hints inside the map
-  """
-  @spec check(binary()) :: {:ok, check_result()} | {:error, errors()}
-  def check(input) do
-    case execute_command(input, :check) do
-      :ok ->
-        {:ok, %{script: input}}
-
-      {:ok, details} ->
-        {:ok, %{script: input, details: normalize_check_logs(details)}}
-
-      {:error, %{reason: errors}} ->
-        {:error, %{reason: normalize_check_logs(errors)}}
     end
   end
 
@@ -110,7 +74,7 @@ defmodule Numscriptex do
     initial_balance = Map.get(run_struct, :balances)
 
     run_struct
-    |> Map.from_struct()
+    |> Run.normalize_to_map()
     |> Map.merge(%{script: numscript})
     |> JSON.encode!()
     |> execute_command(:run)
@@ -230,20 +194,6 @@ defmodule Numscriptex do
     {:ok, %{numscript_wasm: String.trim(result)}}
   end
 
-  defp handle_operation_result({:ok, %{"valid" => valid?} = result}, :check)
-       when is_boolean(valid?) and valid? do
-    normalized_result = Map.delete(result, "valid")
-
-    has_details? = not Enum.empty?(normalized_result)
-
-    if has_details?, do: {:ok, normalized_result}, else: :ok
-  end
-
-  defp handle_operation_result({:ok, %{"valid" => valid?, "errors" => _err} = result}, :check)
-       when is_boolean(valid?) and not valid? do
-    {:error, %{reason: Map.delete(result, "valid")}}
-  end
-
   defp handle_operation_result({:ok, %{"postings" => postings} = result}, :run) do
     if Enum.empty?(postings),
       do: {:error, %{reason: :invalid_input}},
@@ -255,8 +205,6 @@ defmodule Numscriptex do
   defp handle_operation_result(result, _operation), do: result
 
   defp handle_errors({:ok, _} = result), do: result
-
-  defp handle_errors(:ok), do: :ok
 
   defp handle_errors({:error, %{reason: reason, details: details}}) do
     {:error, %{reason: normalize_error(reason), details: normalize_error(details)}}
@@ -273,29 +221,4 @@ defmodule Numscriptex do
   end
 
   defp normalize_error(error), do: error
-
-  defp normalize_check_logs(logs) do
-    logs
-    |> Utilities.normalize_keys(:atom)
-    |> check_log_level_to_atom()
-    |> check_logs_to_struct()
-    |> Enum.into(%{})
-  end
-
-  defp check_logs_to_struct(logs) do
-    Enum.map(logs, fn {key, value} ->
-      {key, Enum.map(value, &CheckLog.from_map/1)}
-    end)
-  end
-
-  defp check_log_level_to_atom(check_logs) do
-    Enum.flat_map(check_logs, fn {key, logs} ->
-      normalized_level_field =
-        Enum.map(logs, fn log ->
-          Map.update(log, :level, nil, &String.to_existing_atom/1)
-        end)
-
-      Map.replace(check_logs, key, normalized_level_field)
-    end)
-  end
 end
