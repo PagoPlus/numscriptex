@@ -45,42 +45,60 @@ defmodule NumscriptexTest do
     end
 
     test "with valid script", %{script: script} do
-      assert {:ok, result} = Numscriptex.check(script)
-      assert result.script == script
+      case Numscriptex.version() do
+        %{numscript_wasm: "v0.2.0", numscriptex: _} ->
+          assert {:ok, result} = Numscriptex.check(script)
+          assert result.script == script
+
+        _ ->
+          assert {:error, %{reason: :unsupported_version}} = Numscriptex.check(script)
+      end
     end
 
     test "with valid script, but unused var", %{warning_script: warning_script} do
-      assert {:ok, result} = Numscriptex.check(warning_script)
-      assert result.script == warning_script
+      case Numscriptex.version() do
+        %{numscript_wasm: "v0.2.0"} ->
+          assert {:ok, result} = Numscriptex.check(warning_script)
+          assert result.script == warning_script
 
-      assert result.details == %{
-               warnings: [
-                 %CheckLog{
-                   character: 10,
-                   level: :warning,
-                   line: 1,
-                   message: "The variable '$unused' is never used"
+          assert result.details == %{
+                   warnings: [
+                     %CheckLog{
+                       character: 10,
+                       level: :warning,
+                       line: 1,
+                       message: "The variable '$unused' is never used"
+                     }
+                   ]
                  }
-               ]
-             }
 
-      has_errors? = Map.has_key?(result.details, :errors)
+          has_errors? = Map.has_key?(result.details, :errors)
 
-      refute has_errors?
+          refute has_errors?
+        _ ->
+          assert {:error, %{reason: :unsupported_version}} = Numscriptex.check(warning_script)
+      end
+
     end
 
     test "with invalid script", %{script: script} do
       error_script = String.replace(script, "a", "e")
 
-      assert {:error, %{reason: reason}} = Numscriptex.check(error_script)
-      assert [error | _errors] = reason.errors
+      case Numscriptex.version() do
+        %{numscript_wasm: "v0.2.0"} ->
+          assert {:error, %{reason: reason}} = Numscriptex.check(error_script)
+          assert [error | _errors] = reason.errors
 
-      assert error == %CheckLog{
-               character: 0,
-               level: :error,
-               line: 0,
-               message: "The function 'vers' does not exist"
-             }
+          assert error == %CheckLog{
+                  character: 0,
+                  level: :error,
+                  line: 0,
+                  message: "The function 'vers' does not exist"
+                }
+
+        _ ->
+          assert {:error, %{reason: :unsupported_version}} = Numscriptex.check(error_script)
+      end
     end
   end
 
@@ -515,8 +533,15 @@ defmodule NumscriptexTest do
                  source: "orders:1234"
                },
                %Numscriptex.Posting{
-                 amount: 8000,
-                 decimal_amount: 80.0,
+                 amount: 500,
+                 decimal_amount: 5.0,
+                 asset: "USD/2",
+                 destination: "merchants:6789",
+                 source: "orders:1234"
+               },
+               %Numscriptex.Posting{
+                 amount: 7500,
+                 decimal_amount: 75.0,
                  asset: "USD/2",
                  destination: "merchants:6789",
                  source: "orders:1234"
@@ -1139,6 +1164,71 @@ defmodule NumscriptexTest do
       assert error.details == "Not enough funds. Needed [USD/2 501] (only [USD/2 500] available)"
     end
 
+    test "with experimental feature flags" do
+      script = """
+      vars {
+        monetary $mon = [USD/2 100]
+        number $n = get_amount($mon)
+      }
+
+      send [USD/2 $n] (
+        source = oneof {
+          @foo
+          @bar
+        }
+
+        destination = @baz
+      )
+      """
+
+      balances = %{"bar" => %{"USD/2" => 500, "EUR/2" => 300}}
+      feature_flags = %{"experimental-oneof" => true, "experimental-get-amount-function" => true, "experimental-mid-script-function-call" => true}
+      metadata = %{}
+      variables = %{}
+
+      struct = build_run_struct(balances, metadata, variables, feature_flags)
+
+      assert {:ok, result} = Numscriptex.run(script, struct)
+
+      assert result.postings == [
+               %Numscriptex.Posting{
+                 source: "bar",
+                 destination: "baz",
+                 asset: "USD/2",
+                 amount: 100,
+                 decimal_amount: 1.0
+               }
+             ]
+
+      assert result.balances == [
+               %Numscriptex.Balance{
+                 account: "bar",
+                 asset: "EUR/2",
+                 final_balance: 300,
+                 initial_balance: 300,
+                 decimal_final_balance: 3.0,
+                 decimal_initial_balance: 3.0
+               },
+               %Numscriptex.Balance{
+                 account: "bar",
+                 asset: "USD/2",
+                 final_balance: 400,
+                 initial_balance: 500,
+                 decimal_final_balance: 4.0,
+                 decimal_initial_balance: 5.0
+               },
+               %Numscriptex.Balance{
+                 account: "baz",
+                 asset: "USD/2",
+                 final_balance: 100,
+                 initial_balance: 0,
+                 decimal_final_balance: 1.0,
+                 decimal_initial_balance: 0.0
+               }
+               # foo is not present because he does not have any balance
+             ]
+    end
+
     test "with insufficient amount" do
       script = """
       send [USD/2 100] (
@@ -1192,7 +1282,7 @@ defmodule NumscriptexTest do
       assert {:error, error} = Numscriptex.run(script, %Numscriptex.Run{})
 
       assert error.details ==
-               "Got errors while parsing:\nmismatched input 'source' expecting {')', '[', RATIO_PORTION_LITERAL, PERCENTAGE_PORTION_LITERAL, STRING, NUMBER, VARIABLE_NAME, ACCOUNT, ASSET}\n  0 | sd ( source = @foo destination = @bar)\n    |      ~~~~~"
+               "Got errors while parsing:\nmismatched input 'source' expecting {'overdraft', '(', ')', '[', PERCENTAGE_PORTION_LITERAL, STRING, IDENTIFIER, NUMBER, ASSET, '@', VARIABLE_NAME}\n  0 | sd ( source = @foo destination = @bar)\n    |      ~~~~~"
     end
 
     test "fails with invalid script but valid sctruct" do
@@ -1210,11 +1300,12 @@ defmodule NumscriptexTest do
     end
   end
 
-  defp build_run_struct(balances, metadata, variables) do
+  defp build_run_struct(balances, metadata, variables, feature_flags \\ %{}) do
     %Numscriptex.Run{}
     |> Numscriptex.Run.put!(:balances, balances)
     |> Numscriptex.Run.put!(:metadata, metadata)
     |> Numscriptex.Run.put!(:variables, variables)
+    |> Numscriptex.Run.put!(:featureFlags, feature_flags)
   end
 
   describe "version/0" do

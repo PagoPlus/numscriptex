@@ -19,7 +19,6 @@ defmodule Numscriptex.BuilderTest do
       }
 
       assert {:ok, %{script: script}} = Builder.build(metadata)
-      assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
              send [USD 500] (
@@ -43,7 +42,6 @@ defmodule Numscriptex.BuilderTest do
       }
 
       assert {:ok, %{script: script}} = Builder.build(metadata)
-      assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
              send [USD *] (
@@ -76,7 +74,6 @@ defmodule Numscriptex.BuilderTest do
       }
 
       assert {:ok, %{script: script}} = Builder.build(metadata)
-      assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
              send [USD *] (
@@ -159,7 +156,6 @@ defmodule Numscriptex.BuilderTest do
       }
 
       assert {:ok, %{script: script}} = Builder.build(metadata)
-      assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
              send [EUR *] (
@@ -216,7 +212,6 @@ defmodule Numscriptex.BuilderTest do
       }
 
       assert {:ok, %{script: script}} = Builder.build(metadata)
-      assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
              send [EUR *] (
@@ -255,7 +250,6 @@ defmodule Numscriptex.BuilderTest do
       }
 
       assert {:ok, %{script: script}} = Builder.build(metadata)
-      assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
              send [EUR *] (
@@ -292,7 +286,6 @@ defmodule Numscriptex.BuilderTest do
       }
 
       assert {:ok, %{script: script}} = Builder.build(metadata)
-      assert {:ok, _script} = Numscriptex.check(script)
 
       assert script == """
              send [EUR *] (

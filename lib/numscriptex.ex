@@ -11,6 +11,7 @@ defmodule Numscriptex do
   alias Numscriptex.Balance
   alias Numscriptex.CheckLog
   alias Numscriptex.Posting
+  alias Numscriptex.Run
   alias Numscriptex.Utilities
 
   require AssetsManager
@@ -41,7 +42,7 @@ defmodule Numscriptex do
 
   ```elixir
   iex> Numscriptex.version()
-  %{numscriptex: "v0.2.5", numscript_wasm: "v0.0.2"}
+  %{numscriptex: "v0.2.5", numscript_wasm: "v0.1.0"}
   ```
   """
   @spec version() :: %{numscriptex: binary(), numscript_wasm: binary()}
@@ -62,28 +63,23 @@ defmodule Numscriptex do
   end
 
   @doc """
-  To use `check/1` you just need to pass your numscript as its argument.
-  Ex:
-
-  ```elixir
-  iex> script = "send [USD/2 100] (source = @foo destination = @bar)"
-  iex> Numscriptex.check(script)
-  {:ok, %{script: script}}
-  ```
-
-  It could also return some warnings, infos or hints inside the map
+  Check if a numscript syntax is valid.
   """
   @spec check(binary()) :: {:ok, check_result()} | {:error, errors()}
+  @deprecated "This function is deprecated and only works if your numscript.wasm version is 0.2.0."
   def check(input) do
-    case execute_command(input, :check) do
-      :ok ->
-        {:ok, %{script: input}}
-
+    with %{numscript_wasm: "v0.2.0"} <- version(),
+         :ok <- execute_command(input, :check) do
+      {:ok, %{script: input}}
+    else
       {:ok, details} ->
         {:ok, %{script: input, details: normalize_check_logs(details)}}
 
       {:error, %{reason: errors}} ->
         {:error, %{reason: normalize_check_logs(errors)}}
+
+      versions when is_map(versions) ->
+        {:error, %{reason: :unsupported_version}}
     end
   end
 
@@ -110,6 +106,7 @@ defmodule Numscriptex do
     initial_balance = Map.get(run_struct, :balances)
 
     run_struct
+    |> Run.normalize_feature_flags()
     |> Map.from_struct()
     |> Map.merge(%{script: numscript})
     |> JSON.encode!()

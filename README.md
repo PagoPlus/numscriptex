@@ -34,7 +34,7 @@ Ex:
 ```elixir
 config :numscriptex,
        binary_path: :numscriptex |> :code.priv_dir() |> Path.join("numscript.wasm")
-       version: "0.0.2",
+       version: "0.1.0",
        retries: 3
 ```
 These above are the default values.
@@ -59,18 +59,21 @@ The abstraction is made by creating a struct:
 iex>  %Numscriptex.Run{
 ...>    balances: %{},
 ...>    metadata: %{},
-...>    variables: %{}
+...>    variables: %{},
+...>    featureFlags: %{}
 ...>  }
 ```
 Where:
 - `:balances` a map with the account's assets balances.
-- `:metadata` [metada variables](https://docs.formance.com/numscript/reference/metadata);
-- `:variables` [variables](https://docs.formance.com/numscript/reference/variables) used inside the script.
+- `:metadata` [metada variables](https://docs.formance.com/modules/numscript/reference/metadata);
+- `:variables` [variables](https://docs.formance.com/modules/numscript/reference/variables).
+- `:featureFlags` feature flags that enables numscript experimental features.
 
 And to create a new struct, you can use the `Numscriptex.Run.put/3` or `Numscriptex.Run.put!/3` functions. Ex:
 ```elixir
 iex>  variables = %{"order" => "orders:2345"}
 ...>  balances = %{"orders:2345" => %{"USD/2" => 1000}}
+...>  feature_flags = %{"experimental-oneof" => true}
 ...>  metadata = %{
 ...>    "merchants:1234" => %{"commission" => "15%"},
 ...>    "orders:2345" => %{"merchant" => "merchants:1234"}
@@ -80,6 +83,7 @@ iex>  variables = %{"order" => "orders:2345"}
 ...>  |> Numscriptex.Run.put!(:balances, balances)
 ...>  |> Numscriptex.Run.put!(:metadata, metadata)
 ...>  |> Numscriptex.Run.put!(:variables, variables)
+...>  |> Numscriptex.Run.put!(:featureFlags, feature_flags)
 ```
 
 Will return:
@@ -88,6 +92,7 @@ Will return:
 iex> %Numscriptex.Run{
 ...>   variables: %{"orders:2345" => %{"USD/2" => 1000}},
 ...>   balances: %{"order" => "orders:2345"},
+...>   featureFlags: {"experimental-oneof" => true},
 ...>   metadata: %{
 ...>     "merchants:1234" => %{"commission" => "15%"},
 ...>     "orders:2345" => %{"merchant" => "merchants:1234"}
@@ -98,6 +103,8 @@ iex> %Numscriptex.Run{
 Kindly reminder: you will always need a valid `Numscriptex.Run` struct to successfully execute your scripts.
 
 ### Check
+**WARNING:** this feature is deprecated and only works if your numscript-wasm binary version is 0.0.2!!
+
 To use `Numscriptex.check/1` you just have to pass your numscript as it's argument. Ex:
 
 ```elixir
