@@ -48,8 +48,8 @@ defmodule Numscriptex.CheckLog do
   }
   ```
   """
+  @doc deprecated: "This function (as well as the whole `Numscriptex.CheckLog` module) is deprecated and only works if your numscript.wasm version is 0.2.0."
   @spec from_map(map()) :: __MODULE__.t()
-  @deprecated "This function (as well as the whole `Numscriptex.CheckLog` module) is deprecated and only works if your numscript.wasm version is 0.2.0."
   def from_map(map) do
     struct(__MODULE__, normalize(map))
   end
