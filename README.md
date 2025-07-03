@@ -17,7 +17,7 @@ You will just need to add `:numscriptex` as a dependency on your `mix.exs`, and 
 ```elixir
 def deps do
   [
-    {:numscriptex, "~> 0.2.5"}
+    {:numscriptex, "~> 0.2.6"}
   ]
 end
 ```
