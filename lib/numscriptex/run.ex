@@ -108,7 +108,10 @@ defmodule Numscriptex.Run do
     if invalid_flags == [] do
       {:ok, Map.replace(run_struct, :featureFlags, value)}
     else
-      {:error, :invalid_value, %{details: "The feature flag(s). See `Numscriptex.Run.list_available_feature_flags/0` for a list of valid feature flags."}}
+      err_msg =
+        "The feature flag(s). See `Numscriptex.Run.list_available_feature_flags/0` for a list of valid feature flags."
+
+      {:error, :invalid_value, %{details: err_msg}}
     end
   end
 
