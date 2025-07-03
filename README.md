@@ -68,6 +68,15 @@ Where:
 - `:variables` [variables](https://docs.formance.com/modules/numscript/reference/variables).
 - `:feature_flags` feature flags that enables numscript experimental features.
 
+The avaialable feature flags are:
+- experimental_overdraft_function
+- experimental_get_asset_function
+- experimental_get_amount_function
+- experimental_oneof
+- experimental_account_interpolation
+- experimental_mid_script_function_call
+- experimental_asset_colors
+
 And to create a new struct, you can use the `Numscriptex.Run.put/3` or `Numscriptex.Run.put!/3` functions. Ex:
 ```elixir
 iex>  variables = %{"order" => "orders:2345"}
